@@ -53,13 +53,47 @@ builder.Services.AddTransient<PlanningFacade>(x =>
 });
 
 
-//
-builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>();
-builder.Services.AddTransient<ResourceAvailabilityRepository>();
-builder.Services.AddTransient<ResourceAvailabilityReadModel>();
+// availability
+builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>(x => new AvailabilityFacade(
+    x.GetRequiredService<ResourceAvailabilityRepository>(),
+    new ResourceAvailabilityReadModel(x.GetRequiredService<IDbConnection>()), //x.GetRequiredService<ResourceAvailabilityReadModel>()
+    x.GetRequiredService<IEventsPublisher>(),
+    x.GetRequiredService<TimeProvider>(),
+    x.GetRequiredService<IUnitOfWork>()));
+builder.Services.AddTransient<ResourceAvailabilityRepository>(x =>
+    new ResourceAvailabilityRepository(x.GetRequiredService<IDbConnection>()));
+
+// allocation
+builder.Services.AddScoped<IAllocationDbContext>(
+    sp => sp.GetRequiredService<SmartScheduleDbContext>());
+builder.Services.AddScoped<IProjectAllocationsRepository, ProjectAllocationsRepository>(
+    x => new ProjectAllocationsRepository(x.GetRequiredService<IAllocationDbContext>()));
+builder.Services.AddTransient<AllocationFacade>(
+    x => new AllocationFacade(
+        x.GetRequiredService<IProjectAllocationsRepository>(),
+        x.GetRequiredService<IAvailabilityFacade>(),
+        x.GetRequiredService<ICapabilityFinder>(),
+        x.GetRequiredService<IEventsPublisher>(),
+        x.GetRequiredService<TimeProvider>(),
+        x.GetRequiredService<IUnitOfWork>()));
+builder.Services.AddTransient<PotentialTransfersService>(x => new PotentialTransfersService(
+    x.GetRequiredService<SimulationFacade>(),
+    x.GetRequiredService<CashFlowFacade>(),
+    x.GetRequiredService<IAllocationDbContext>()));
+
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("PublishMissingDemandsJob");
+    q.AddJob<PublishMissingDemandsJob>(opts => opts.WithIdentity(jobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("PublishMissingDemandsJob-trigger")
+        .WithCronSchedule("0 0 * ? * *"));
+});
+IServiceCollection temp = builder.Services;
 
 
-builder.Services.AddAllocation();
 builder.Services.AddCashFlow();
 builder.Services.AddEmployee();
 builder.Services.AddDevice();
