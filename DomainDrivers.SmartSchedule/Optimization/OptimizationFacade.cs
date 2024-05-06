@@ -22,7 +22,7 @@ public class OptimizationFacade
 
         for (var i = 0; i <= capacitiesSize; i++)
         {
-            chosenItemsList[i] = new List<Item>();
+            chosenItemsList[i] = [];
             allocatedCapacitiesList.Add(new HashSet<ICapacityDimension>());
         }
 
@@ -50,10 +50,7 @@ public class OptimizationFacade
                     dp[j] = sumValue + dp[j - chosenCapacitiesCount];
 
                     chosenItemsList[j] =
-                        new List<Item>(chosenItemsList[j - chosenCapacitiesCount])
-                        {
-                            item
-                        };
+                        [..chosenItemsList[j - chosenCapacitiesCount], item];
 
                     allocatedCapacitiesList[j].UnionWith(chosenCapacities);
                 }
@@ -76,7 +73,7 @@ public class OptimizationFacade
         foreach (var weightComponent in totalWeight.Components())
         {
             var matchingCapacity = availableCapacities
-                .FirstOrDefault(dimension => weightComponent.IsSatisfiedBy(dimension));
+                .FirstOrDefault(weightComponent.IsSatisfiedBy);
 
             if (matchingCapacity != null)
             {

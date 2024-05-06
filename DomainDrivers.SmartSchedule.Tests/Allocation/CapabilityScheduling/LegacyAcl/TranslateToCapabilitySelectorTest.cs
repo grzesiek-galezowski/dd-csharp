@@ -27,8 +27,8 @@ public class TranslateToCapabilitySelectorTest
         CollectionAssert.AreEquivalent(new List<CapabilitySelector>
             {
                 CanPerformOneOf(new HashSet<Capability> { Skill("YT DRAMA COMMENTS") }),
-                CapabilitySelector.CanPerformAllAtTheTime(Capability.Skills("JAVA", "CSHARP", "PYTHON")),
-                CapabilitySelector.CanPerformAllAtTheTime(Capability.Skills("RUST", "CSHARP", "PYTHON")),
+                CanPerformAllAtTheTime(Skills("JAVA", "CSHARP", "PYTHON")),
+                CanPerformAllAtTheTime(Skills("RUST", "CSHARP", "PYTHON")),
                 CanPerformOneOf(new HashSet<Capability> { Permission("ADMIN") }),
                 CanPerformOneOf(new HashSet<Capability> { Permission("ADMIN") }),
                 CanPerformOneOf(new HashSet<Capability> { Permission("ROOT") })

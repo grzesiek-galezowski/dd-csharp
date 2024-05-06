@@ -13,6 +13,6 @@ public record AvailableResourceCapability(Guid ResourceId, CapabilitySelector Ca
 
     public bool Performs(Capability capability)
     {
-        return CapabilitySelector.CanPerform(new HashSet<Capability>() { capability });
+        return CapabilitySelector.CanPerform(new HashSet<Capability> { capability });
     }
 }

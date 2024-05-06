@@ -9,9 +9,9 @@ namespace DomainDrivers.SmartSchedule.Tests.Allocation;
 
 public class DemandSchedulingTest
 {
-    static readonly Demand Java = new Demand(Capability.Skill("JAVA"), TimeSlot.CreateDailyTimeSlotAtUtc(2022, 2, 2));
+    private static readonly Demand Java = new Demand(Capability.Skill("JAVA"), TimeSlot.CreateDailyTimeSlotAtUtc(2022, 2, 2));
 
-    static readonly TimeSlot ProjectDates = new TimeSlot(DateTime.Parse("2021-01-01T00:00:00.00Z"),
+    private static readonly TimeSlot ProjectDates = new TimeSlot(DateTime.Parse("2021-01-01T00:00:00.00Z"),
         DateTime.Parse("2021-01-06T00:00:00.00Z"));
 
     private readonly AllocationFacade _allocationFacade;

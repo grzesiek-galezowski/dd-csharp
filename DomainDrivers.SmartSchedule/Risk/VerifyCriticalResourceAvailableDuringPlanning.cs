@@ -5,18 +5,11 @@ using MediatR;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
-public class VerifyCriticalResourceAvailableDuringPlanning : INotificationHandler<CriticalStagePlanned>
+public class VerifyCriticalResourceAvailableDuringPlanning(
+    IAvailabilityFacade availabilityFacade,
+    IRiskPushNotification riskPushNotification)
+    : INotificationHandler<CriticalStagePlanned>
 {
-    private readonly IAvailabilityFacade _availabilityFacade;
-    private readonly IRiskPushNotification _riskPushNotification;
-
-    public VerifyCriticalResourceAvailableDuringPlanning(IAvailabilityFacade availabilityFacade,
-        IRiskPushNotification riskPushNotification)
-    {
-        _availabilityFacade = availabilityFacade;
-        _riskPushNotification = riskPushNotification;
-    }
-
     public async Task Handle(CriticalStagePlanned criticalStagePlanned, CancellationToken cancellationToken)
     {
         if (criticalStagePlanned.CriticalResource == null)
@@ -25,12 +18,12 @@ public class VerifyCriticalResourceAvailableDuringPlanning : INotificationHandle
         }
 
         var calendar =
-            await _availabilityFacade.LoadCalendar(criticalStagePlanned.CriticalResource,
+            await availabilityFacade.LoadCalendar(criticalStagePlanned.CriticalResource,
                 criticalStagePlanned.StageTimeSlot);
 
         if (!ResourceIsAvailable(criticalStagePlanned.StageTimeSlot, calendar))
         {
-            _riskPushNotification.NotifyAboutCriticalResourceNotAvailable(criticalStagePlanned.ProjectId,
+            riskPushNotification.NotifyAboutCriticalResourceNotAvailable(criticalStagePlanned.ProjectId,
                 criticalStagePlanned.CriticalResource, criticalStagePlanned.StageTimeSlot);
         }
     }

@@ -7,13 +7,13 @@ namespace DomainDrivers.SmartSchedule.Tests.Planning;
 
 public class TimeCriticalWaterfallTest : IntegrationTestWithSharedApp
 {
-    static readonly TimeSlot Jan1_5 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
+    private static readonly TimeSlot Jan1_5 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
         DateTime.Parse("2020-01-05T00:00:00.00Z"));
 
-    static readonly TimeSlot Jan1_3 =
+    private static readonly TimeSlot Jan1_3 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-03T00:00:00Z"));
 
-    static readonly TimeSlot Jan1_4 =
+    private static readonly TimeSlot Jan1_4 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-04T00:00:00Z"));
 
     private readonly PlanningFacade _projectFacade;

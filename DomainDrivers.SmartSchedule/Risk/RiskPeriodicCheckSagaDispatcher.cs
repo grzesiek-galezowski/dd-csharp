@@ -7,35 +7,23 @@ using MediatR;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
-public class RiskPeriodicCheckSagaDispatcher :
-    INotificationHandler<EarningsRecalculated>, INotificationHandler<ProjectAllocationScheduled>,
-    INotificationHandler<ResourceTakenOver>, INotificationHandler<NotSatisfiedDemands>
+public class RiskPeriodicCheckSagaDispatcher(
+    RiskPeriodicCheckSagaRepository riskSagaRepository,
+    PotentialTransfersService potentialTransfersService,
+    ICapabilityFinder capabilityFinder,
+    IRiskPushNotification riskPushNotification,
+    TimeProvider clock,
+    IUnitOfWork unitOfWork)
+    :
+        INotificationHandler<EarningsRecalculated>, INotificationHandler<ProjectAllocationScheduled>,
+        INotificationHandler<ResourceTakenOver>, INotificationHandler<NotSatisfiedDemands>
 {
-    private readonly RiskPeriodicCheckSagaRepository _riskSagaRepository;
-    private readonly PotentialTransfersService _potentialTransfersService;
-    private readonly ICapabilityFinder _capabilityFinder;
-    private readonly IRiskPushNotification _riskPushNotification;
-    private readonly TimeProvider _clock;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public RiskPeriodicCheckSagaDispatcher(RiskPeriodicCheckSagaRepository riskSagaRepository,
-        PotentialTransfersService potentialTransfersService, ICapabilityFinder capabilityFinder,
-        IRiskPushNotification riskPushNotification, TimeProvider clock, IUnitOfWork unitOfWork)
-    {
-        _riskSagaRepository = riskSagaRepository;
-        _potentialTransfersService = potentialTransfersService;
-        _capabilityFinder = capabilityFinder;
-        _riskPushNotification = riskPushNotification;
-        _clock = clock;
-        _unitOfWork = unitOfWork;
-    }
-
     //remember about transactions spanning saga and potential external system
     public async Task Handle(ProjectAllocationScheduled @event, CancellationToken cancellationToken)
     {
-        var (found, nextStep) = await _unitOfWork.InTransaction(async () =>
+        var (found, nextStep) = await unitOfWork.InTransaction(async () =>
         {
-            var found = await _riskSagaRepository.FindByProjectIdOrCreate(@event.ProjectAllocationsId);
+            var found = await riskSagaRepository.FindByProjectIdOrCreate(@event.ProjectAllocationsId);
             var nextStep = found.Handle(@event);
             return (found, nextStep);
         });
@@ -45,10 +33,10 @@ public class RiskPeriodicCheckSagaDispatcher :
     //remember about transactions spanning saga and potential external system
     public async Task Handle(NotSatisfiedDemands @event, CancellationToken cancellationToken)
     {
-        var nextSteps = await _unitOfWork.InTransaction(async () =>
+        var nextSteps = await unitOfWork.InTransaction(async () =>
         {
-            var sagas = await _riskSagaRepository.FindByProjectIdInOrElseCreate(
-                new List<ProjectAllocationsId>(@event.MissingDemands.Keys));
+            var sagas = await riskSagaRepository.FindByProjectIdInOrElseCreate(
+                [..@event.MissingDemands.Keys]);
             IDictionary<RiskPeriodicCheckSaga, RiskPeriodicCheckSagaStep?> nextSteps =
                 new Dictionary<RiskPeriodicCheckSaga, RiskPeriodicCheckSagaStep?>();
             foreach (var saga in sagas)
@@ -70,14 +58,14 @@ public class RiskPeriodicCheckSagaDispatcher :
     //remember about transactions spanning saga and potential external system
     public async Task Handle(EarningsRecalculated @event, CancellationToken cancellationToken)
     {
-        var (found, nextStep) = await _unitOfWork.InTransaction(async () =>
+        var (found, nextStep) = await unitOfWork.InTransaction(async () =>
         {
-            var found = await _riskSagaRepository.FindByProjectId(@event.ProjectId);
+            var found = await riskSagaRepository.FindByProjectId(@event.ProjectId);
 
             if (found == null)
             {
                 found = new RiskPeriodicCheckSaga(@event.ProjectId, @event.Earnings);
-                await _riskSagaRepository.Add(found);
+                await riskSagaRepository.Add(found);
             }
 
             var nextStep = found.Handle(@event);
@@ -93,7 +81,7 @@ public class RiskPeriodicCheckSagaDispatcher :
             .Select(owner => new ProjectAllocationsId(owner.OwnerId!.Value))
             .ToList();
 
-        var sagas = await _riskSagaRepository.FindByProjectIdIn(interested);
+        var sagas = await riskSagaRepository.FindByProjectIdIn(interested);
 
         //transaction per one saga
         foreach (var saga in sagas)
@@ -104,7 +92,7 @@ public class RiskPeriodicCheckSagaDispatcher :
 
     private async Task Handle(RiskPeriodicCheckSaga saga, ResourceTakenOver @event)
     {
-        var nextStep = await _unitOfWork.InTransaction(() =>
+        var nextStep = await unitOfWork.InTransaction(() =>
         {
             var nextStep = saga.Handle(@event);
             return Task.FromResult(nextStep);
@@ -114,13 +102,13 @@ public class RiskPeriodicCheckSagaDispatcher :
 
     public async Task HandleWeeklyCheck()
     {
-        var sagas = await _riskSagaRepository.FindAll();
+        var sagas = await riskSagaRepository.FindAll();
 
         foreach (var saga in sagas)
         {
-            var nextStep = await _unitOfWork.InTransaction(() =>
+            var nextStep = await unitOfWork.InTransaction(() =>
             {
-                var nextStep = saga.HandleWeeklyCheck(_clock.GetUtcNow().DateTime);
+                var nextStep = saga.HandleWeeklyCheck(clock.GetUtcNow().DateTime);
                 return Task.FromResult(nextStep);
             });
             await Perform(nextStep, saga);
@@ -132,7 +120,7 @@ public class RiskPeriodicCheckSagaDispatcher :
         switch (nextStep)
         {
             case RiskPeriodicCheckSagaStep.NotifyAboutDemandsSatisfied:
-                _riskPushNotification.NotifyDemandsSatisfied(saga.ProjectId);
+                riskPushNotification.NotifyDemandsSatisfied(saga.ProjectId);
                 break;
             case RiskPeriodicCheckSagaStep.FindAvailable:
                 await HandleFindAvailableFor(saga);
@@ -143,7 +131,7 @@ public class RiskPeriodicCheckSagaDispatcher :
                 await HandleSimulateRelocation(saga);
                 break;
             case RiskPeriodicCheckSagaStep.NotifyAboutPossibleRisk:
-                _riskPushNotification.NotifyAboutPossibleRisk(saga.ProjectId);
+                riskPushNotification.NotifyAboutPossibleRisk(saga.ProjectId);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(nextStep), nextStep, null);
@@ -156,7 +144,7 @@ public class RiskPeriodicCheckSagaDispatcher :
 
         if (replacements.Values.SelectMany(x => x.All).Any())
         {
-            _riskPushNotification.NotifyAboutAvailability(saga.ProjectId, replacements);
+            riskPushNotification.NotifyAboutAvailability(saga.ProjectId, replacements);
         }
     }
 
@@ -169,11 +157,11 @@ public class RiskPeriodicCheckSagaDispatcher :
             foreach (var replacement in replacements.All)
             {
                 var profitAfterMovingCapabilities =
-                    await _potentialTransfersService.ProfitAfterMovingCapabilities(saga.ProjectId, replacement,
+                    await potentialTransfersService.ProfitAfterMovingCapabilities(saga.ProjectId, replacement,
                         replacement.TimeSlot);
                 if (profitAfterMovingCapabilities > 0)
                 {
-                    _riskPushNotification.NotifyProfitableRelocationFound(saga.ProjectId, replacement.Id);
+                    riskPushNotification.NotifyProfitableRelocationFound(saga.ProjectId, replacement.Id);
                 }
             }
         }
@@ -187,7 +175,7 @@ public class RiskPeriodicCheckSagaDispatcher :
         foreach (var demand in demands.All)
         {
             var allocatableCapabilitiesSummary =
-                await _capabilityFinder.FindAvailableCapabilities(demand.Capability, demand.Slot);
+                await capabilityFinder.FindAvailableCapabilities(demand.Capability, demand.Slot);
             replacements.Add(demand, allocatableCapabilitiesSummary);
         }
 
@@ -201,7 +189,7 @@ public class RiskPeriodicCheckSagaDispatcher :
         foreach (var demand in demands.All)
         {
             var allocatableCapabilitiesSummary =
-                await _capabilityFinder.FindCapabilities(demand.Capability, demand.Slot);
+                await capabilityFinder.FindCapabilities(demand.Capability, demand.Slot);
             replacements.Add(demand, allocatableCapabilitiesSummary);
         }
 

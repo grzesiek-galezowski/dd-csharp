@@ -2,23 +2,16 @@ using DomainDrivers.SmartSchedule.Optimization;
 
 namespace DomainDrivers.SmartSchedule.Simulation;
 
-public class SimulationFacade
+public class SimulationFacade(OptimizationFacade optimizationFacade)
 {
-    private readonly OptimizationFacade _optimizationFacade;
-
-    public SimulationFacade(OptimizationFacade optimizationFacade)
-    {
-        _optimizationFacade = optimizationFacade;
-    }
-
     public double ProfitAfterBuyingNewCapability(IList<SimulatedProject> projectsSimulations,
         SimulatedCapabilities capabilitiesWithoutNewOne, AdditionalPricedCapability newPricedCapability)
     {
         var capabilitiesWithNewResource =
             capabilitiesWithoutNewOne.Add(newPricedCapability.AvailableResourceCapability);
-        var resultWithout = _optimizationFacade.Calculate(ToItems(projectsSimulations),
+        var resultWithout = optimizationFacade.Calculate(ToItems(projectsSimulations),
             ToCapacity(capabilitiesWithoutNewOne), Comparer<Item>.Create((x, y) => y.Value.CompareTo(x.Value)));
-        var resultWith = _optimizationFacade.Calculate(ToItems(projectsSimulations),
+        var resultWith = optimizationFacade.Calculate(ToItems(projectsSimulations),
             ToCapacity(capabilitiesWithNewResource), Comparer<Item>.Create((x, y) => y.Value.CompareTo(x.Value)));
         return resultWith.Profit - decimal.ToDouble(newPricedCapability.Value) - resultWithout.Profit;
     }
@@ -26,7 +19,7 @@ public class SimulationFacade
     public Result WhatIsTheOptimalSetup(
         IList<SimulatedProject> projectsSimulations, SimulatedCapabilities totalCapability)
     {
-        return _optimizationFacade.Calculate(ToItems(projectsSimulations), ToCapacity(totalCapability),
+        return optimizationFacade.Calculate(ToItems(projectsSimulations), ToCapacity(totalCapability),
             Comparer<Item>.Create((x, y) => y.Value.CompareTo(x.Value)));
     }
 
@@ -40,7 +33,7 @@ public class SimulationFacade
     private IList<Item> ToItems(IList<SimulatedProject> projectsSimulations)
     {
         return projectsSimulations
-            .Select(project => ToItem(project))
+            .Select(ToItem)
             .ToList();
     }
 

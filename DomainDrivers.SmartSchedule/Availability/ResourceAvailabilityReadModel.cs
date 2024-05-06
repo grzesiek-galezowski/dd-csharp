@@ -4,7 +4,7 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceAvailabilityReadModel
+public class ResourceAvailabilityReadModel(IDbConnection dbConnection)
 {
     private const string CalendarQuery =
         $"""
@@ -53,12 +53,6 @@ public class ResourceAvailabilityReadModel
          ORDER BY
             start_date;
          """;
-    private readonly IDbConnection _dbConnection;
-
-    public ResourceAvailabilityReadModel(IDbConnection dbConnection)
-    {
-        _dbConnection = dbConnection;
-    }
 
     public async Task<Calendar> Load(ResourceId resourceId, TimeSlot timeSlot)
     {
@@ -68,7 +62,7 @@ public class ResourceAvailabilityReadModel
 
     public async Task<Calendars> LoadAll(ISet<ResourceId> resourceIds, TimeSlot timeSlot)
     {
-        var results = await _dbConnection.QueryAsync<ResourceAvailabilityReadModelRow>(
+        var results = await dbConnection.QueryAsync<ResourceAvailabilityReadModelRow>(
             CalendarQuery,
             new ResourceAvailabilityReadModelParam(
                 timeSlot.From, timeSlot.To, resourceIds.Select(x => x.Id!.Value).ToArray()));

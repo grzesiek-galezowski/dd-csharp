@@ -4,21 +4,12 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Resource;
 
-public class ResourceFacade
+public class ResourceFacade(EmployeeFacade employeeFacade, DeviceFacade deviceFacade)
 {
-    private readonly EmployeeFacade _employeeFacade;
-    private readonly DeviceFacade _deviceFacade;
-
-    public ResourceFacade(EmployeeFacade employeeFacade, DeviceFacade deviceFacade)
-    {
-        _employeeFacade = employeeFacade;
-        _deviceFacade = deviceFacade;
-    }
-    
     public async Task<IList<Capability>> FindAllCapabilities() 
     {
-        var employeeCapabilities = await _employeeFacade.FindAllCapabilities();
-        var deviceCapabilities = await _deviceFacade.FindAllCapabilities();
+        var employeeCapabilities = await employeeFacade.FindAllCapabilities();
+        var deviceCapabilities = await deviceFacade.FindAllCapabilities();
         return deviceCapabilities.Concat(employeeCapabilities).ToList();
     }
 }

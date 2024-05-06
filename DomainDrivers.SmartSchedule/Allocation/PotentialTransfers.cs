@@ -27,7 +27,7 @@ public record PotentialTransfers(
 
         Summary.ProjectAllocations[projectFrom] = newAllocationsProjectFrom;
         var newAllocationsProjectTo =
-            to.Add(new AllocatedCapability(allocatedCapability.AllocatedCapabilityId, allocatedCapability.Capability, forSlot));
+            to.Add(allocatedCapability with { TimeSlot = forSlot });
         Summary.ProjectAllocations[projectTo] = newAllocationsProjectTo;
         return new PotentialTransfers(Summary, Earnings);
     }

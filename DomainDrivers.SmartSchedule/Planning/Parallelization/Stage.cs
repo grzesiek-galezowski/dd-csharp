@@ -8,7 +8,7 @@ public record Stage(string StageName, ISet<Stage> Dependencies, ISet<ResourceId>
 {
     public Stage OfDuration(TimeSpan duration)
     {
-        return new Stage(StageName, Dependencies, Resources, duration);
+        return this with { Duration = duration };
     }
 
     public Stage(string name) : this(name, new HashSet<Stage>(), new HashSet<ResourceId>(), TimeSpan.Zero)
@@ -19,18 +19,15 @@ public record Stage(string StageName, ISet<Stage> Dependencies, ISet<ResourceId>
     {
         var newDependencies = new HashSet<Stage>(Dependencies) { stage };
         Dependencies.Add(stage);
-        return new Stage(StageName, newDependencies, Resources, Duration);
+        return this with { Dependencies = newDependencies };
     }
 
-    public string Name
-    {
-        get { return StageName; }
-    }
+    public string Name => StageName;
 
     public Stage WithChosenResourceCapabilities(params ResourceId[] resources)
     {
         var collect = new HashSet<ResourceId>(resources);
-        return new Stage(StageName, Dependencies, collect, Duration);
+        return this with { Resources = collect };
     }
 
     public virtual bool Equals(Stage? other)

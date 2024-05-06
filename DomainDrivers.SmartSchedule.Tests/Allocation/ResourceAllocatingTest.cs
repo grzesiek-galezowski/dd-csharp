@@ -40,9 +40,9 @@ public class ResourceAllocatingTest : IntegrationTestWithSharedApp
         Assert.True(result.HasValue);
         var summary = await _allocationFacade.FindAllProjectsAllocations();
         Assert.Equal(
-            new HashSet<AllocatedCapability>() { new AllocatedCapability(allocatableCapabilityId, CapabilitySelector.CanJustPerform(skillJava), oneDay) },
+            new HashSet<AllocatedCapability> { new AllocatedCapability(allocatableCapabilityId, CapabilitySelector.CanJustPerform(skillJava), oneDay) },
             summary.ProjectAllocations[projectId].All);
-        Assert.Equal(new List<Demand>() { demand }, summary.Demands[projectId].All);
+        Assert.Equal(new List<Demand> { demand }, summary.Demands[projectId].All);
         Assert.True(await AvailabilityWasBlocked(allocatableCapabilityId.ToAvailabilityResourceId(), oneDay, projectId));
     }
 
@@ -123,7 +123,7 @@ public class ResourceAllocatingTest : IntegrationTestWithSharedApp
     {
         var allocatableCapabilityIds =
             await _capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(allocatableResourceId,
-                new List<CapabilitySelector>() { capabilities }, oneDay);
+                new List<CapabilitySelector> { capabilities }, oneDay);
         Assert.Single(allocatableCapabilityIds);
         return allocatableCapabilityIds[0];
     }

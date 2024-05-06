@@ -46,7 +46,7 @@ public record TimeSlot(DateTime From, DateTime To)
 
         if (!other.OverlapsWith(this))
         {
-            return new List<TimeSlot>() { this, other };
+            return new List<TimeSlot> { this, other };
         }
 
         if (this == other)
@@ -56,22 +56,22 @@ public record TimeSlot(DateTime From, DateTime To)
 
         if (From < other.From)
         {
-            result.Add(new TimeSlot(From, other.From));
+            result.Add(this with { To = other.From });
         }
 
         if (other.From < From)
         {
-            result.Add(new TimeSlot(other.From, From));
+            result.Add(other with { To = From });
         }
 
         if (To > other.To)
         {
-            result.Add(new TimeSlot(other.To, To));
+            result.Add(this with { From = other.To });
         }
 
         if (other.To > To)
         {
-            result.Add(new TimeSlot(To, other.To));
+            result.Add(other with { From = To });
         }
 
         return result;
@@ -89,15 +89,9 @@ public record TimeSlot(DateTime From, DateTime To)
         return new TimeSlot(commonStart, commonEnd);
     }
 
-    public bool IsEmpty
-    {
-        get { return From == To; }
-    }
+    public bool IsEmpty => From == To;
 
-    public TimeSpan Duration
-    {
-        get { return To - From; }
-    }
+    public TimeSpan Duration => To - From;
 
     public TimeSlot Stretch(TimeSpan duration)
     {

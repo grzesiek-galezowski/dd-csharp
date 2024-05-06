@@ -118,7 +118,7 @@ public class CapabilitySchedulingTest : IntegrationTestWithSharedApp
         var admin = CapabilitySelector.CanJustPerform(adminPermission);
         var oneDay = TimeSlot.CreateDailyTimeSlotAtUtc(1111, 1, 1);
         var differentDay = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 2, 1);
-        var hourWithinDay = new TimeSlot(oneDay.From, oneDay.From.AddSeconds(3600));
+        var hourWithinDay = oneDay with { To = oneDay.From.AddSeconds(3600) };
         var partiallyOverlappingDay = new TimeSlot(oneDay.From.AddSeconds(3600), oneDay.To.AddSeconds(3600));
         //and
         await _capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(AllocatableResourceId.NewOne(),
@@ -141,13 +141,13 @@ public class CapabilitySchedulingTest : IntegrationTestWithSharedApp
     public async Task FindingTakesIntoAccountSimulationsCapabilities()
     {
         //given
-        var truckAssets = new HashSet<Capability>() { Capability.Asset("LOADING"), Capability.Asset("CARRYING") };
+        var truckAssets = new HashSet<Capability> { Capability.Asset("LOADING"), Capability.Asset("CARRYING") };
         var truckCapabilities = CapabilitySelector.CanPerformAllAtTheTime(truckAssets);
         var oneDay = TimeSlot.CreateDailyTimeSlotAtUtc(1111, 1, 1);
         //and
         var truckResourceId = AllocatableResourceId.NewOne();
         await _capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(truckResourceId,
-            new List<CapabilitySelector>() { truckCapabilities }, oneDay);
+            new List<CapabilitySelector> { truckCapabilities }, oneDay);
 
         //when
         var canPerformBoth =

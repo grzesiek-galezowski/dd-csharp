@@ -2,14 +2,9 @@ using DomainDrivers.SmartSchedule.Planning.Scheduling;
 
 namespace DomainDrivers.SmartSchedule.Tests.Planning.Scheduling.Assertions;
 
-public class ScheduleAssert
+public class ScheduleAssert(Schedule actual)
 {
-    public ScheduleAssert(Schedule actual)
-    {
-        Schedule = actual;
-    }
-
-    public Schedule Schedule { get; }
+    public Schedule Schedule { get; } = actual;
 
     public static ScheduleAssert AssertThat(Schedule actual)
     {

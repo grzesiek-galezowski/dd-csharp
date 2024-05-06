@@ -39,10 +39,10 @@ public class CreatingDeviceTest : IntegrationTestWithSharedApp
         var loaded = await _deviceFacade.FindAllCapabilities();
 
         //then
-        Assert.Contains(Capability.Asset("SMALL-EXCAVATOR"), loaded);
-        Assert.Contains(Capability.Asset("BULLDOZER"), loaded);
-        Assert.Contains(Capability.Asset("MEDIUM-EXCAVATOR"), loaded);
-        Assert.Contains(Capability.Asset("UBER-BULLDOZER"), loaded);
-        Assert.Contains(Capability.Asset("BIG-EXCAVATOR"), loaded);
+        Assert.Contains(Asset("SMALL-EXCAVATOR"), loaded);
+        Assert.Contains(Asset("BULLDOZER"), loaded);
+        Assert.Contains(Asset("MEDIUM-EXCAVATOR"), loaded);
+        Assert.Contains(Asset("UBER-BULLDOZER"), loaded);
+        Assert.Contains(Asset("BIG-EXCAVATOR"), loaded);
     }
 }

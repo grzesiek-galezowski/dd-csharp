@@ -1,15 +1,10 @@
 ﻿namespace DomainDrivers.SmartSchedule.Allocation.Cashflow;
 
-public class Cashflow
+public class Cashflow(ProjectAllocationsId projectId)
 {
-    public ProjectAllocationsId ProjectId { get; private set; }
+    public ProjectAllocationsId ProjectId { get; private set; } = projectId;
     private Income? _income;
-    private Cost? _cost; 
-
-    public Cashflow(ProjectAllocationsId projectId)
-    {
-        ProjectId = projectId;
-    }
+    private Cost? _cost;
 
     public Earnings Earnings()
     {

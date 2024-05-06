@@ -23,7 +23,7 @@ public class AvailabilityCalendarTest : IntegrationTestWithSharedApp
         var resourceId = ResourceId.NewOne();
         var durationOfSevenSlots = TimeSpan.FromMinutes(7 * DefaultSegmentDurationInMinutes);
         var sevenSlots = TimeSlot.CreateTimeSlotAtUtcOfDuration(2021, 1, 1, durationOfSevenSlots);
-        var minimumSlot = new TimeSlot(sevenSlots.From, sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes));
+        var minimumSlot = sevenSlots with { To = sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes) };
         var owner = Owner.NewOne();
         //and
         await _availabilityFacade.CreateResourceSlots(resourceId, sevenSlots);
@@ -45,7 +45,7 @@ public class AvailabilityCalendarTest : IntegrationTestWithSharedApp
         var resourceId2 = ResourceId.NewOne();
         var durationOfSevenSlots = TimeSpan.FromMinutes(7 * DefaultSegmentDurationInMinutes);
         var sevenSlots = TimeSlot.CreateTimeSlotAtUtcOfDuration(2021, 1, 1, durationOfSevenSlots);
-        var minimumSlot = new TimeSlot(sevenSlots.From, sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes));
+        var minimumSlot = sevenSlots with { To = sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes) };
 
         var owner = Owner.NewOne();
         await _availabilityFacade.CreateResourceSlots(resourceId, sevenSlots);
@@ -57,7 +57,7 @@ public class AvailabilityCalendarTest : IntegrationTestWithSharedApp
 
         //then
         var calendars =
-            await _availabilityFacade.LoadCalendars(new HashSet<ResourceId>() { resourceId, resourceId2 }, sevenSlots);
+            await _availabilityFacade.LoadCalendars(new HashSet<ResourceId> { resourceId, resourceId2 }, sevenSlots);
         Assert.Equal(new[] { minimumSlot }, calendars.Get(resourceId).TakenBy(owner));
         Assert.Equal(new[] { minimumSlot }, calendars.Get(resourceId2).TakenBy(owner));
         CollectionAssert.AreEquivalent(sevenSlots.LeftoverAfterRemovingCommonWith(minimumSlot),

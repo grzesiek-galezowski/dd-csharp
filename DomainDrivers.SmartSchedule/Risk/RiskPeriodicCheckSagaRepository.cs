@@ -3,23 +3,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
-public class RiskPeriodicCheckSagaRepository
+public class RiskPeriodicCheckSagaRepository(IRiskDbContext riskDbContext)
 {
-    private readonly IRiskDbContext _riskDbContext;
-
-    public RiskPeriodicCheckSagaRepository(IRiskDbContext riskDbContext)
-    {
-        _riskDbContext = riskDbContext;
-    }
-
     public async Task<RiskPeriodicCheckSaga?> FindByProjectId(ProjectAllocationsId projectId)
     {
-        return await _riskDbContext.RiskPeriodicCheckSagas.SingleOrDefaultAsync(x => x.ProjectId == projectId);
+        return await riskDbContext.RiskPeriodicCheckSagas.SingleOrDefaultAsync(x => x.ProjectId == projectId);
     }
 
     public async Task<IList<RiskPeriodicCheckSaga>> FindByProjectIdIn(List<ProjectAllocationsId> interested)
     {
-        return await _riskDbContext.RiskPeriodicCheckSagas
+        return await riskDbContext.RiskPeriodicCheckSagas
             .Where(x => interested.Contains(x.ProjectId))
             .ToListAsync();
     }
@@ -48,11 +41,11 @@ public class RiskPeriodicCheckSagaRepository
 
     public async Task<IList<RiskPeriodicCheckSaga>> FindAll()
     {
-        return await _riskDbContext.RiskPeriodicCheckSagas.ToListAsync();
+        return await riskDbContext.RiskPeriodicCheckSagas.ToListAsync();
     }
     
     public async Task<RiskPeriodicCheckSaga> Add(RiskPeriodicCheckSaga riskPeriodicCheckSaga)
     {
-        return (await _riskDbContext.RiskPeriodicCheckSagas.AddAsync(riskPeriodicCheckSaga)).Entity;
+        return (await riskDbContext.RiskPeriodicCheckSagas.AddAsync(riskPeriodicCheckSaga)).Entity;
     }
 }

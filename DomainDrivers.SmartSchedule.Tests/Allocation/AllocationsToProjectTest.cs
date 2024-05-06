@@ -8,13 +8,13 @@ namespace DomainDrivers.SmartSchedule.Tests.Allocation;
 
 public class AllocationsToProjectTest
 {
-    static readonly DateTime When = DateTime.MinValue;
-    static readonly ProjectAllocationsId ProjectId = ProjectAllocationsId.NewOne();
-    static readonly AllocatableCapabilityId AdminId = AllocatableCapabilityId.NewOne();
-    static readonly TimeSlot Feb1 = TimeSlot.CreateDailyTimeSlotAtUtc(2020, 2, 1);
-    static readonly TimeSlot Feb2 = TimeSlot.CreateDailyTimeSlotAtUtc(2020, 2, 2);
-    static readonly TimeSlot January = TimeSlot.CreateMonthlyTimeSlotAtUtc(2020, 1);
-    static readonly TimeSlot February = TimeSlot.CreateMonthlyTimeSlotAtUtc(2020, 2);
+    private static readonly DateTime When = DateTime.MinValue;
+    private static readonly ProjectAllocationsId ProjectId = ProjectAllocationsId.NewOne();
+    private static readonly AllocatableCapabilityId AdminId = AllocatableCapabilityId.NewOne();
+    private static readonly TimeSlot Feb1 = TimeSlot.CreateDailyTimeSlotAtUtc(2020, 2, 1);
+    private static readonly TimeSlot Feb2 = TimeSlot.CreateDailyTimeSlotAtUtc(2020, 2, 2);
+    private static readonly TimeSlot January = TimeSlot.CreateMonthlyTimeSlotAtUtc(2020, 1);
+    private static readonly TimeSlot February = TimeSlot.CreateMonthlyTimeSlotAtUtc(2020, 2);
 
     [Fact]
     public void CanAllocate()
@@ -169,8 +169,8 @@ public class AllocationsToProjectTest
 
         //when
         var fifteenMinutesIn1Feb = new TimeSlot(Feb1.From.AddHours(1), Feb1.From.AddHours(2));
-        var oneHourBefore = new TimeSlot(Feb1.From, Feb1.From.AddHours(1));
-        var theRest = new TimeSlot(Feb1.From.AddHours(2), Feb1.To);
+        var oneHourBefore = Feb1 with { To = Feb1.From.AddHours(1) };
+        var theRest = Feb1 with { From = Feb1.From.AddHours(2) };
 
         //when
         var @event = allocations.Release(new AllocatableCapabilityId(allocatedAdmin!.AllocatedCapabilityId), fifteenMinutesIn1Feb, When);

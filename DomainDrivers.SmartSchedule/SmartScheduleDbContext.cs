@@ -8,14 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule;
 
-public class SmartScheduleDbContext : DbContext, IAllocationDbContext,
+public class SmartScheduleDbContext(DbContextOptions<SmartScheduleDbContext> options) : DbContext(options),
+    IAllocationDbContext,
     ICashflowDbContext, IEmployeeDbContext, IDeviceDbContext, ICapabilitySchedulingDbContext, IRiskDbContext
 {
-    public SmartScheduleDbContext(DbContextOptions<SmartScheduleDbContext> options)
-        : base(options)
-    {
-    }
-    
     public DbSet<ProjectAllocations> ProjectAllocations { get; set; } = null!;
     public DbSet<Cashflow> Cashflows { get; set; } = null!;
     public DbSet<Employee> Employees { get; set; } = null!;

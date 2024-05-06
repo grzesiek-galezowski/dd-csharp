@@ -2,10 +2,7 @@ namespace DomainDrivers.SmartSchedule.Availability;
 
 public record Owner(Guid? OwnerId)
 {
-    public bool ByNone
-    {
-        get { return this == None(); }
-    }
+    public bool ByNone => this == None();
 
     public static Owner None()
     {

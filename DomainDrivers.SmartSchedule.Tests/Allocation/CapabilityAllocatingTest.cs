@@ -113,7 +113,7 @@ public class CapabilityAllocatingTest : IntegrationTestWithSharedApp
     {
         var allocatableCapabilityIds =
             await _capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(allocatableResourceId,
-                new List<CapabilitySelector>() { capabilities }, period);
+                new List<CapabilitySelector> { capabilities }, period);
         return allocatableCapabilityIds[0];
     }
 
@@ -124,6 +124,6 @@ public class CapabilityAllocatingTest : IntegrationTestWithSharedApp
             await _availabilityFacade.LoadCalendars(capabilities.Select(x => x.ToAvailabilityResourceId()).ToHashSet(),
                 oneDay);
         return calendars.CalendarsDictionary.Values.All(calendar =>
-            calendar.TakenBy(Owner.Of(projectId.Id)).SequenceEqual(new List<TimeSlot>() { oneDay }));
+            calendar.TakenBy(Owner.Of(projectId.Id)).SequenceEqual(new List<TimeSlot> { oneDay }));
     }
 }

@@ -5,19 +5,11 @@ using MediatR;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
-public class VerifyNeededResourcesAvailableInTimeSlot : INotificationHandler<NeededResourcesChosen>
+public class VerifyNeededResourcesAvailableInTimeSlot(
+    IAvailabilityFacade availabilityFacade,
+    IRiskPushNotification riskPushNotification)
+    : INotificationHandler<NeededResourcesChosen>
 {
-    private readonly IAvailabilityFacade _availabilityFacade;
-    private readonly IRiskPushNotification _riskPushNotification;
-
-    public VerifyNeededResourcesAvailableInTimeSlot(IAvailabilityFacade availabilityFacade,
-        IRiskPushNotification riskPushNotification)
-    {
-        _availabilityFacade = availabilityFacade;
-        _riskPushNotification = riskPushNotification;
-    }
-
-
     public async Task Handle(NeededResourcesChosen resourcesNeeded, CancellationToken cancellationToken)
     {
         await NotifyAboutNotAvailableResources(resourcesNeeded.NeededResources, resourcesNeeded.TimeSlot,
@@ -28,7 +20,7 @@ public class VerifyNeededResourcesAvailableInTimeSlot : INotificationHandler<Nee
         ProjectId projectId)
     {
         var notAvailable = new HashSet<ResourceId>();
-        var calendars = await _availabilityFacade.LoadCalendars(resourcedIds, timeSlot);
+        var calendars = await availabilityFacade.LoadCalendars(resourcedIds, timeSlot);
 
         foreach (var resourceId in resourcedIds)
         {
@@ -40,7 +32,7 @@ public class VerifyNeededResourcesAvailableInTimeSlot : INotificationHandler<Nee
 
         if (notAvailable.Any())
         {
-            _riskPushNotification.NotifyAboutResourcesNotAvailable(projectId, notAvailable);
+            riskPushNotification.NotifyAboutResourcesNotAvailable(projectId, notAvailable);
         }
     }
 }

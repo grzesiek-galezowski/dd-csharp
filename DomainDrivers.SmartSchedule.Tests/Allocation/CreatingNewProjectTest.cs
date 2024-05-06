@@ -9,8 +9,8 @@ namespace DomainDrivers.SmartSchedule.Tests.Allocation;
 
 public class CreatingNewProjectTest
 {
-    static TimeSlot Jan = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
-    static TimeSlot Feb = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 2, 1);
+    private static TimeSlot Jan = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
+    private static TimeSlot Feb = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 2, 1);
 
     private readonly IEventsPublisher _eventsPublisher;
     private readonly AllocationFacade _allocationFacade;
@@ -35,7 +35,7 @@ public class CreatingNewProjectTest
 
         //then
         var summary =
-            await _allocationFacade.FindAllProjectsAllocations(new HashSet<ProjectAllocationsId>() { newProject });
+            await _allocationFacade.FindAllProjectsAllocations(new HashSet<ProjectAllocationsId> { newProject });
         Assert.Equal(demands, summary.Demands[newProject]);
         Assert.Equal(Jan, summary.TimeSlots[newProject]);
         await _eventsPublisher
@@ -57,7 +57,7 @@ public class CreatingNewProjectTest
 
         //then
         var summary =
-            await _allocationFacade.FindAllProjectsAllocations(new HashSet<ProjectAllocationsId>() { newProject });
+            await _allocationFacade.FindAllProjectsAllocations(new HashSet<ProjectAllocationsId> { newProject });
         Assert.Equal(Feb, summary.TimeSlots[newProject]);
         await _eventsPublisher
             .Received(1)

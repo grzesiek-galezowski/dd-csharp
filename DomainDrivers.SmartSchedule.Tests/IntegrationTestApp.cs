@@ -79,10 +79,7 @@ public class PostgresFixture : IAsyncLifetime
         .WithImage("postgres:15-alpine")
         .Build();
 
-    public string ConnectionString
-    {
-        get { return _postgres.GetConnectionString(); }
-    }
+    public string ConnectionString => _postgres.GetConnectionString();
 
     public async Task InitializeAsync()
     {

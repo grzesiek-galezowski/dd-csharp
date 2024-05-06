@@ -2,22 +2,15 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling.LegacyAcl;
 
-public class EmployeeCreatedInLegacySystemMessageHandler
+public class EmployeeCreatedInLegacySystemMessageHandler(CapabilityScheduler capabilityScheduler)
 {
-    private readonly CapabilityScheduler _capabilityScheduler;
-
-    public EmployeeCreatedInLegacySystemMessageHandler(CapabilityScheduler capabilityScheduler)
-    {
-        _capabilityScheduler = capabilityScheduler;
-    }
-
     //subscribe to message bus
     //StreamListener to (message_bus)
     public async Task Handle(EmployeeDataFromLegacyEsbMessage message)
     {
         var allocatableResourceId = new AllocatableResourceId(message.ResourceId);
         var capabilitySelectors = new TranslateToCapabilitySelector().Translate(message);
-        await _capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(allocatableResourceId, capabilitySelectors,
+        await capabilityScheduler.ScheduleResourceCapabilitiesForPeriod(allocatableResourceId, capabilitySelectors,
             message.TimeSlot);
     }
 }

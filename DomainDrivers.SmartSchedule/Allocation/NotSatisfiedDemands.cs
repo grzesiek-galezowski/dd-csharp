@@ -15,7 +15,7 @@ public record NotSatisfiedDemands(
     public static NotSatisfiedDemands ForOneProject(ProjectAllocationsId projectId, Demands scheduledDemands,
         DateTime occurredAt)
     {
-        return new NotSatisfiedDemands(Guid.NewGuid(), new Dictionary<ProjectAllocationsId, Demands>()
+        return new NotSatisfiedDemands(Guid.NewGuid(), new Dictionary<ProjectAllocationsId, Demands>
         {
             { projectId, scheduledDemands }
         }, occurredAt);
@@ -23,7 +23,7 @@ public record NotSatisfiedDemands(
 
     public static NotSatisfiedDemands AllSatisfied(ProjectAllocationsId projectId, DateTime occurredAt)
     {
-        return new NotSatisfiedDemands(Guid.NewGuid(), new Dictionary<ProjectAllocationsId, Demands>()
+        return new NotSatisfiedDemands(Guid.NewGuid(), new Dictionary<ProjectAllocationsId, Demands>
         {
             { projectId, Demands.None() }
         }, occurredAt);

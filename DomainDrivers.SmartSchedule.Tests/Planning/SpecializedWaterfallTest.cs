@@ -8,19 +8,19 @@ namespace DomainDrivers.SmartSchedule.Tests.Planning;
 
 public class SpecializedWaterfallTest : IntegrationTestWithSharedApp
 {
-    static readonly TimeSlot Jan1_2 =
+    private static readonly TimeSlot Jan1_2 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-02T00:00:00Z"));
 
-    static readonly TimeSlot Jan1_4 =
+    private static readonly TimeSlot Jan1_4 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-04T00:00:00Z"));
 
-    static readonly TimeSlot Jan1_5 =
+    private static readonly TimeSlot Jan1_5 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-05T00:00:00Z"));
 
-    static readonly TimeSlot Jan1_6 =
+    private static readonly TimeSlot Jan1_6 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-06T00:00:00Z"));
 
-    static readonly TimeSlot Jan4_8 =
+    private static readonly TimeSlot Jan4_8 =
         new TimeSlot(DateTime.Parse("2020-01-04T00:00:00.00Z"), DateTime.Parse("2020-01-08T00:00:00Z"));
 
     private readonly PlanningFacade _projectFacade;

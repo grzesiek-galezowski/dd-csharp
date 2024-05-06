@@ -14,7 +14,7 @@ public record CapabilitySelector(ISet<Capability> Capabilities, SelectingPolicy 
 
     public static CapabilitySelector CanJustPerform(Capability capability)
     {
-        return new CapabilitySelector(new HashSet<Capability>() { capability }, SelectingPolicy.OneOfAll);
+        return new CapabilitySelector(new HashSet<Capability> { capability }, SelectingPolicy.OneOfAll);
     }
     
     public bool CanPerform(Capability capability)

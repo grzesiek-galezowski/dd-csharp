@@ -19,10 +19,7 @@ public record TotalCapacity(IList<ICapacityDimension> CapacitiesList)
         return new TotalCapacity(new List<ICapacityDimension>());
     }
 
-    public int Size
-    {
-        get { return CapacitiesList.Count; }
-    }
+    public int Size => CapacitiesList.Count;
 
     public IList<ICapacityDimension> Capacities()
     {

@@ -33,7 +33,7 @@ public record Allocations(ISet<AllocatedCapability> All)
         var leftOvers = allocatedCapability.TimeSlot
             .LeftoverAfterRemovingCommonWith(slot)
             .Where(leftOver => leftOver.Within(allocatedCapability.TimeSlot))
-            .Select(leftOver => new AllocatedCapability(allocatedCapability.AllocatedCapabilityId, allocatedCapability.Capability, leftOver))
+            .Select(leftOver => allocatedCapability with { TimeSlot = leftOver })
             .ToHashSet();
         var newSlots = new HashSet<AllocatedCapability>(All);
         newSlots.Remove(allocatedCapability);

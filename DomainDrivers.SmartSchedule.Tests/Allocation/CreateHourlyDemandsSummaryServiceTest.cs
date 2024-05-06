@@ -24,11 +24,11 @@ public class CreateHourlyDemandsSummaryServiceTest
         var javaProject = new ProjectAllocations(javaProjectId, Allocations.None(), Java, Jan);
 
         //when
-        var result = _service.Create(new List<ProjectAllocations>() { csharpProject, javaProject }, Now);
+        var result = _service.Create(new List<ProjectAllocations> { csharpProject, javaProject }, Now);
 
         //then
         Assert.Equal(Now, result.OccurredAt);
-        var expectedMissingDemands = new Dictionary<ProjectAllocationsId, Demands>()
+        var expectedMissingDemands = new Dictionary<ProjectAllocationsId, Demands>
         {
             { javaProjectId, Java },
             { csharpProjectId, Csharp }
@@ -46,11 +46,11 @@ public class CreateHourlyDemandsSummaryServiceTest
         var withoutTimeSlot = new ProjectAllocations(withoutTimeSlotId, Allocations.None(), Java);
 
         //when
-        var result = _service.Create(new List<ProjectAllocations>() { withTimeSlot, withoutTimeSlot }, Now);
+        var result = _service.Create(new List<ProjectAllocations> { withTimeSlot, withoutTimeSlot }, Now);
 
         //then
         Assert.Equal(Now, result.OccurredAt);
-        var expectedMissingDemands = new Dictionary<ProjectAllocationsId, Demands>() { { withTimeSlotId, Csharp } };
+        var expectedMissingDemands = new Dictionary<ProjectAllocationsId, Demands> { { withTimeSlotId, Csharp } };
         CollectionAssert.AreEquivalent(expectedMissingDemands, result.MissingDemands);
     }
 }

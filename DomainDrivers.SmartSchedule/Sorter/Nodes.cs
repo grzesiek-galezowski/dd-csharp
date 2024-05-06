@@ -9,10 +9,7 @@ public record Nodes<T>(ISet<Node<T>> NodesCollection)
     {
     }
 
-    public ISet<Node<T>> All
-    {
-        get { return NodesCollection.ToFrozenSet(); }
-    }
+    public ISet<Node<T>> All => NodesCollection.ToFrozenSet();
 
     public Nodes<T> Add(Node<T> node)
     {

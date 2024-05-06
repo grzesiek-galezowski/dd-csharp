@@ -130,7 +130,7 @@ public class AvailabilityFacadeTest : IntegrationTestWithSharedApp
         await _availabilityFacade.CreateResourceSlots(resourceId, oneDay);
         //and
         await _availabilityFacade.Block(resourceId, oneDay, owner);
-        var fifteenMinutes = new TimeSlot(oneDay.From, oneDay.From.AddMinutes(15));
+        var fifteenMinutes = oneDay with { To = oneDay.From.AddMinutes(15) };
 
         //when
         var result = await _availabilityFacade.Block(resourceId, fifteenMinutes, Owner.NewOne());
@@ -148,7 +148,7 @@ public class AvailabilityFacadeTest : IntegrationTestWithSharedApp
         //given
         var resourceId = ResourceId.NewOne();
         var oneDay = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
-        var fifteenMinutes = new TimeSlot(oneDay.From, oneDay.From.AddMinutes(15));
+        var fifteenMinutes = oneDay with { To = oneDay.From.AddMinutes(15) };
         var owner = Owner.NewOne();
         await _availabilityFacade.CreateResourceSlots(resourceId, fifteenMinutes);
         //and
@@ -210,7 +210,7 @@ public class AvailabilityFacadeTest : IntegrationTestWithSharedApp
         var resourceId = ResourceId.NewOne();
         var durationOfSevenSlots = TimeSpan.FromMinutes(7 * DefaultSegmentDurationInMinutes);
         var sevenSlots = TimeSlot.CreateTimeSlotAtUtcOfDuration(2021, 1, 1, durationOfSevenSlots);
-        var minimumSlot = new TimeSlot(sevenSlots.From, sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes));
+        var minimumSlot = sevenSlots with { To = sevenSlots.From.AddMinutes(DefaultSegmentDurationInMinutes) };
         var owner = Owner.NewOne();
         await _availabilityFacade.CreateResourceSlots(resourceId, sevenSlots);
         //and
@@ -256,7 +256,7 @@ public class AvailabilityFacadeTest : IntegrationTestWithSharedApp
         return @event =>
             @event.ResourceId == resourceId
             && @event.Slot == oneDay
-            && @event.PreviousOwners.SetEquals(new HashSet<Owner>() { initialOwner })
+            && @event.PreviousOwners.SetEquals(new HashSet<Owner> { initialOwner })
             && @event.OccurredAt != default
             && @event.EventId != default;
     }

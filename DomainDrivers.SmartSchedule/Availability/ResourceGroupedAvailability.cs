@@ -4,14 +4,9 @@ using static DomainDrivers.SmartSchedule.Availability.Segment.SegmentInMinutes;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceGroupedAvailability
+public class ResourceGroupedAvailability(IList<ResourceAvailability> resourceAvailabilities)
 {
-    public ResourceGroupedAvailability(IList<ResourceAvailability> resourceAvailabilities)
-    {
-        Availabilities = resourceAvailabilities;
-    }
-
-    public IList<ResourceAvailability> Availabilities { get; }
+    public IList<ResourceAvailability> Availabilities { get; } = resourceAvailabilities;
 
     public ResourceId? ResourceId
     {
@@ -22,21 +17,15 @@ public class ResourceGroupedAvailability
         }
     }
 
-    public int Size
-    {
-        get { return Availabilities.Count; }
-    }
+    public int Size => Availabilities.Count;
 
     public bool IsEntirelyAvailable
     {
         get { return Availabilities.All(ra => ra.BlockedBy.ByNone); }
     }
 
-    public bool HasNoSlots
-    {
-        get { return Availabilities.Count == 0; }
-    }
-    
+    public bool HasNoSlots => Availabilities.Count == 0;
+
     public static ResourceGroupedAvailability Of(ResourceId resourceId, TimeSlot timeslot)
     {
         var resourceAvailabilities = Segments

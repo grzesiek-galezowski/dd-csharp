@@ -5,9 +5,9 @@ namespace DomainDrivers.SmartSchedule.Tests.Availability;
 
 public class ResourceAvailabilityTest
 {
-    ResourceAvailabilityId ResourceAvailabilityId = ResourceAvailabilityId.NewOne();
-    Owner OwnerOne = Owner.NewOne();
-    Owner OwnerTwo = Owner.NewOne();
+    private ResourceAvailabilityId ResourceAvailabilityId = ResourceAvailabilityId.NewOne();
+    private Owner OwnerOne = Owner.NewOne();
+    private Owner OwnerTwo = Owner.NewOne();
 
     [Fact]
     public void CanBeBlockedWhenIsAvailable() {

@@ -41,7 +41,7 @@ public class ScheduleBasedOnChosenResourcesAvailabilityCalculator
             commonSlotForAllResources = commonSlotForAllResources.Stretch(TimeSpan.FromDays(1));
         }
 
-        return new TimeSlot(commonSlotForAllResources.From, commonSlotForAllResources.From.Add(stage.Duration));
+        return commonSlotForAllResources with { To = commonSlotForAllResources.From.Add(stage.Duration) };
     }
 
     private bool IsSlotLongEnoughForStage(Stage stage, TimeSlot slot)

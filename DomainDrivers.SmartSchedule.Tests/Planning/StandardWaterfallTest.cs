@@ -10,18 +10,18 @@ namespace DomainDrivers.SmartSchedule.Tests.Planning;
 
 public class StandardWaterfallTest : IntegrationTestWithSharedApp
 {
-    static readonly DateTime Jan1 = DateTime.Parse("2020-01-01T00:00:00.00Z");
-    static readonly ResourceId Resource1 = ResourceId.NewOne();
-    static readonly ResourceId Resource2 = ResourceId.NewOne();
-    static readonly ResourceId Resource4 = ResourceId.NewOne();
+    private static readonly DateTime Jan1 = DateTime.Parse("2020-01-01T00:00:00.00Z");
+    private static readonly ResourceId Resource1 = ResourceId.NewOne();
+    private static readonly ResourceId Resource2 = ResourceId.NewOne();
+    private static readonly ResourceId Resource4 = ResourceId.NewOne();
 
-    static readonly TimeSlot Jan1_2 =
+    private static readonly TimeSlot Jan1_2 =
         new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"), DateTime.Parse("2020-01-02T00:00:00Z"));
 
-    static readonly TimeSlot Jan2_5 =
+    private static readonly TimeSlot Jan2_5 =
         new TimeSlot(DateTime.Parse("2020-01-02T00:00:00.00Z"), DateTime.Parse("2020-01-05T00:00:00Z"));
 
-    static readonly TimeSlot Jan2_12 =
+    private static readonly TimeSlot Jan2_12 =
         new TimeSlot(DateTime.Parse("2020-01-02T00:00:00.00Z"), DateTime.Parse("2020-01-12T00:00:00Z"));
 
     private readonly PlanningFacade _projectFacade;

@@ -2,32 +2,21 @@
 
 namespace DomainDrivers.SmartSchedule.Allocation;
 
-public class PublishMissingDemandsService
+public class PublishMissingDemandsService(
+    ProjectAllocationsRepository projectAllocationsRepository,
+    CreateHourlyDemandsSummaryService createHourlyDemandsSummaryService,
+    IEventsPublisher eventsPublisher,
+    TimeProvider timeProvider)
 {
-    private readonly ProjectAllocationsRepository _projectAllocationsRepository;
-    private readonly CreateHourlyDemandsSummaryService _createHourlyDemandsSummaryService;
-    private readonly IEventsPublisher _eventsPublisher;
-    private readonly TimeProvider _timeProvider;
-
-    public PublishMissingDemandsService(ProjectAllocationsRepository projectAllocationsRepository,
-        CreateHourlyDemandsSummaryService createHourlyDemandsSummaryService, IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider)
-    {
-        _projectAllocationsRepository = projectAllocationsRepository;
-        _createHourlyDemandsSummaryService = createHourlyDemandsSummaryService;
-        _eventsPublisher = eventsPublisher;
-        _timeProvider = timeProvider;
-    }
-
     public async Task Publish()
     {
-        var when = _timeProvider.GetUtcNow().DateTime;
+        var when = timeProvider.GetUtcNow().DateTime;
         var projectAllocations =
-           await _projectAllocationsRepository.FindAllContainingDate(when);
-        var missingDemands = _createHourlyDemandsSummaryService.Create(projectAllocations, when);
+           await projectAllocationsRepository.FindAllContainingDate(when);
+        var missingDemands = createHourlyDemandsSummaryService.Create(projectAllocations, when);
         //add metadata to event
         //if needed call EventStore and translate multiple private events to a new published event
-        await _eventsPublisher.Publish(missingDemands);
+        await eventsPublisher.Publish(missingDemands);
     }
 }
 

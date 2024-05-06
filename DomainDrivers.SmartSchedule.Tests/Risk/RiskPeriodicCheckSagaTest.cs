@@ -145,7 +145,7 @@ public class RiskPeriodicCheckSagaTest
             var nextStep = saga.Handle(new ResourceTakenOver(CapabilityId.ToAvailabilityResourceId(), new HashSet<Owner> { Owner.Of(ProjectId.Id) }, OneDay, beforeDeadline));
 
             //then
-            Assert.Equal(RiskPeriodicCheckSagaStep.NotifyAboutPossibleRisk, nextStep);
+            Assert.Equal(NotifyAboutPossibleRisk, nextStep);
         }
 
         [Fact]

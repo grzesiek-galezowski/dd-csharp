@@ -2,29 +2,22 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(SmartScheduleDbContext dbContext) : IUnitOfWork
 {
-    private readonly SmartScheduleDbContext _dbContext;
-
-    public UnitOfWork(SmartScheduleDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<T> InTransaction<T>(Func<Task<T>> operation)
     {
-        if (_dbContext.Database.CurrentTransaction != null)
+        if (dbContext.Database.CurrentTransaction != null)
         {
             return await operation();
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
         try
         {
             var result = await operation();
 
-            await _dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return result;
@@ -38,19 +31,19 @@ public class UnitOfWork : IUnitOfWork
     
     public async Task InTransaction(Func<Task> operation)
     {
-        if (_dbContext.Database.CurrentTransaction != null)
+        if (dbContext.Database.CurrentTransaction != null)
         {
             await operation();
             return;
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
         try
         {
             await operation();
 
-            await _dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
         }
         catch

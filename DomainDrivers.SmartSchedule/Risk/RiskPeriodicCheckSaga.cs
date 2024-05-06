@@ -6,9 +6,9 @@ namespace DomainDrivers.SmartSchedule.Risk;
 
 public class RiskPeriodicCheckSaga
 {
-    static readonly Earnings RiskThresholdValue = Earnings.Of(1000);
-    static readonly int UpcomingDeadlineAvailabilitySearch = 30;
-    static readonly int UpcomingDeadlineReplacementSuggestion = 15;
+    private static readonly Earnings RiskThresholdValue = Earnings.Of(1000);
+    private static readonly int UpcomingDeadlineAvailabilitySearch = 30;
+    private static readonly int UpcomingDeadlineReplacementSuggestion = 15;
 
     private RiskPeriodicCheckSagaId _riskSagaId;
     private int _version;
@@ -18,10 +18,7 @@ public class RiskPeriodicCheckSaga
     public Earnings? Earnings { get; private set; }
     public DateTime? Deadline { get; private set; }
 
-    public bool AreDemandsSatisfied
-    {
-        get { return MissingDemands.All.Count == 0; }
-    }
+    public bool AreDemandsSatisfied => MissingDemands.All.Count == 0;
 
     public RiskPeriodicCheckSaga(ProjectAllocationsId projectId, Demands missingDemands)
     {

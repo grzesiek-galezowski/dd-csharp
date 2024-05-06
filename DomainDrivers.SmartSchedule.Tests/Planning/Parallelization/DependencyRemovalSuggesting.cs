@@ -22,7 +22,7 @@ public class DependencyRemovalSuggesting
 
         //when
         var suggestion =
-            StageParallelization.WhatToRemove(new HashSet<Stage>() { stage1, stage2, stage3, stage4 });
+            StageParallelization.WhatToRemove(new HashSet<Stage> { stage1, stage2, stage3, stage4 });
 
         //then
         Assert.Equal("[(3 -> 1), (4 -> 3)]", suggestion.ToString());

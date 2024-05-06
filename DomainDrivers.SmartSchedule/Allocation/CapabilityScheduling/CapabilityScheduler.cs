@@ -3,30 +3,21 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 
-public class CapabilityScheduler
+public class CapabilityScheduler(
+    IAvailabilityFacade availabilityFacade,
+    AllocatableCapabilityRepository allocatableResourceRepository,
+    IUnitOfWork unitOfWork)
 {
-    private readonly IAvailabilityFacade _availabilityFacade;
-    private readonly AllocatableCapabilityRepository _allocatableResourceRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public CapabilityScheduler(IAvailabilityFacade availabilityFacade,
-        AllocatableCapabilityRepository allocatableResourceRepository, IUnitOfWork unitOfWork)
-    {
-        _availabilityFacade = availabilityFacade;
-        _allocatableResourceRepository = allocatableResourceRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task<IList<AllocatableCapabilityId>> ScheduleResourceCapabilitiesForPeriod(
         AllocatableResourceId resourceId, IList<CapabilitySelector> capabilities, TimeSlot timeSlot)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var allocatableResourceIds = await CreateAllocatableResources(resourceId, capabilities, timeSlot);
 
             foreach (var resource in allocatableResourceIds)
             {
-                await _availabilityFacade.CreateResourceSlots(resource.ToAvailabilityResourceId(), timeSlot);
+                await availabilityFacade.CreateResourceSlots(resource.ToAvailabilityResourceId(), timeSlot);
             }
 
             return allocatableResourceIds;
@@ -36,7 +27,7 @@ public class CapabilityScheduler
     public async Task<IList<AllocatableCapabilityId>> ScheduleMultipleResourcesForPeriod(
         ISet<AllocatableResourceId> resources, Capability capability, TimeSlot timeSlot)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var allocatableCapability =
                 resources
@@ -44,11 +35,11 @@ public class CapabilityScheduler
                         new AllocatableCapability(resource, CapabilitySelector.CanJustPerform(capability),
                             timeSlot))
                     .ToList();
-            await _allocatableResourceRepository.SaveAll(allocatableCapability);
+            await allocatableResourceRepository.SaveAll(allocatableCapability);
 
             foreach (var resource in allocatableCapability)
             {
-                await _availabilityFacade.CreateResourceSlots(resource.Id.ToAvailabilityResourceId(), timeSlot);
+                await availabilityFacade.CreateResourceSlots(resource.Id.ToAvailabilityResourceId(), timeSlot);
             }
 
             return allocatableCapability
@@ -63,7 +54,7 @@ public class CapabilityScheduler
         var allocatableResources = capabilities
             .Select(capability => new AllocatableCapability(resourceId, capability, timeSlot))
             .ToList();
-        await _allocatableResourceRepository.SaveAll(allocatableResources);
+        await allocatableResourceRepository.SaveAll(allocatableResources);
         return allocatableResources
             .Select(x => x.Id)
             .ToList();
@@ -72,7 +63,7 @@ public class CapabilityScheduler
     public async Task<AllocatableCapabilityId?> FindResourceCapabilities(AllocatableResourceId resourceId,
         Capability capability, TimeSlot period)
     {
-        var result = await _allocatableResourceRepository
+        var result = await allocatableResourceRepository
             .FindByResourceIdAndCapabilityAndTimeSlot(resourceId.Id, capability.Name, capability.Type, period.From,
                 period.To);
 
@@ -87,7 +78,7 @@ public class CapabilityScheduler
     public async Task<AllocatableCapabilityId?> FindResourceCapabilities(AllocatableResourceId allocatableResourceId,
         ISet<Capability> capabilities, TimeSlot timeSlot)
     {
-        return (await _allocatableResourceRepository
+        return (await allocatableResourceRepository
                 .FindByResourceIdAndTimeSlot(allocatableResourceId.Id, timeSlot.From, timeSlot.To))
             .Where(ac => ac.CanPerform(capabilities))
             .Select(allocatableCapability => allocatableCapability.Id)

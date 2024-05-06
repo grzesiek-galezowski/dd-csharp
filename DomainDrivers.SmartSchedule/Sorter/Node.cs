@@ -13,7 +13,7 @@ public record Node<T>(string Name, Nodes<T> Dependencies, T? Content)
 
     public Node<T> DependsOn(Node<T> node)
     {
-        return new Node<T>(Name, Dependencies.Add(node), Content);
+        return this with { Dependencies = Dependencies.Add(node) };
     }
 
     public virtual bool Equals(Node<T>? other)

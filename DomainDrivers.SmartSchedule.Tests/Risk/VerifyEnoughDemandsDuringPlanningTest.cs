@@ -41,8 +41,8 @@ public class VerifyEnoughDemandsDuringPlanningTest : IntegrationTest, IClassFixt
     public async Task DoesNothingWhenEnoughResources()
     {
         //given
-        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Capability.Skills("JAVA5", "PYTHON"), Capability.Permissions());
-        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Capability.Skills("C#", "RUST"), Capability.Permissions());
+        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Skills("JAVA5", "PYTHON"), Permissions());
+        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Skills("C#", "RUST"), Permissions());
         //and
         var projectId = await _planningFacade.AddNewProject("java5");
 
@@ -59,8 +59,8 @@ public class VerifyEnoughDemandsDuringPlanningTest : IntegrationTest, IClassFixt
     public async Task NotifiesWhenNotEnoughResources()
     {
         //given
-        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Capability.Skills("JAVA"), Capability.Permissions());
-        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Capability.Skills("C"), Capability.Permissions());
+        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Skills("JAVA"), Permissions());
+        await _employeeFacade.AddEmployee("resourceName", "lastName", SENIOR, Skills("C"), Permissions());
         //and
         var java = await _planningFacade.AddNewProject("java");
         var c = await _planningFacade.AddNewProject("C");

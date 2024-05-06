@@ -19,7 +19,7 @@ public class ParallelizationTest
         var stage2 = new Stage("Stage2");
 
         //when
-        var sortedStages = StageParallelization.Of(new HashSet<Stage>() { stage1, stage2 });
+        var sortedStages = StageParallelization.Of(new HashSet<Stage> { stage1, stage2 });
 
         //then
         Assert.Equal(1, sortedStages.All.Count);

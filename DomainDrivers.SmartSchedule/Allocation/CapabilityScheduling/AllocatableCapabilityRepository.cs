@@ -2,19 +2,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 
-public class AllocatableCapabilityRepository
+public class AllocatableCapabilityRepository(ICapabilitySchedulingDbContext capabilitySchedulingDbContext)
 {
-    private readonly ICapabilitySchedulingDbContext _capabilitySchedulingDbContext;
-
-    public AllocatableCapabilityRepository(ICapabilitySchedulingDbContext capabilitySchedulingDbContext)
-    {
-        _capabilitySchedulingDbContext = capabilitySchedulingDbContext;
-    }
-
     public async Task<IList<AllocatableCapability>> FindByCapabilityWithin(string name, string type, DateTime from,
         DateTime to)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
+        return await capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
                 $"""
                  SELECT ac.*
                  FROM allocatable_capabilities ac
@@ -31,7 +24,7 @@ public class AllocatableCapabilityRepository
     public async Task<AllocatableCapability?> FindByResourceIdAndCapabilityAndTimeSlot(Guid allocatableResourceId,
         string name, string type, DateTime from, DateTime to)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
+        return await capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
                 $"""
                  SELECT ac.*
                  FROM allocatable_capabilities ac
@@ -49,7 +42,7 @@ public class AllocatableCapabilityRepository
     public async Task<IList<AllocatableCapability>> FindByResourceIdAndTimeSlot(Guid allocatableResourceId,
         DateTime from, DateTime to)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
+        return await capabilitySchedulingDbContext.AllocatableCapabilities.FromSql(
                 $"""
                  SELECT ac.*
                  FROM allocatable_capabilities ac
@@ -63,24 +56,24 @@ public class AllocatableCapabilityRepository
 
     public async Task<IList<AllocatableCapability>> FindAllById(IList<AllocatableCapabilityId> allocatableCapabilityIds)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities
+        return await capabilitySchedulingDbContext.AllocatableCapabilities
             .Where(x => allocatableCapabilityIds.Contains(x.Id))
             .ToListAsync();
     }
     
     public async Task<AllocatableCapability?> FindById(AllocatableCapabilityId allocatableCapabilityId)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities
+        return await capabilitySchedulingDbContext.AllocatableCapabilities
             .FindAsync(allocatableCapabilityId);
     }
 
     public async Task SaveAll(IList<AllocatableCapability> allocatableResources)
     {
-        await _capabilitySchedulingDbContext.AllocatableCapabilities.AddRangeAsync(allocatableResources);
+        await capabilitySchedulingDbContext.AllocatableCapabilities.AddRangeAsync(allocatableResources);
     }
 
     public async Task<bool> ExistsById(AllocatableCapabilityId id)
     {
-        return await _capabilitySchedulingDbContext.AllocatableCapabilities.AnyAsync(x => x.Id == id);
+        return await capabilitySchedulingDbContext.AllocatableCapabilities.AnyAsync(x => x.Id == id);
     }
 }

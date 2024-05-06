@@ -22,41 +22,30 @@ public interface IAvailabilityFacade
     Task<ResourceGroupedAvailability> FindByParentId(ResourceId parentId, TimeSlot within);
 }
 
-public class AvailabilityFacade : IAvailabilityFacade
+public class AvailabilityFacade(
+    ResourceAvailabilityRepository availabilityRepository,
+    ResourceAvailabilityReadModel availabilityReadModel,
+    IEventsPublisher eventsPublisher,
+    TimeProvider timeProvider,
+    IUnitOfWork unitOfWork)
+    : IAvailabilityFacade
 {
-    private readonly ResourceAvailabilityRepository _availabilityRepository;
-    private readonly ResourceAvailabilityReadModel _availabilityReadModel;
-    private readonly IEventsPublisher _eventsPublisher;
-    private readonly TimeProvider _timeProvider;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public AvailabilityFacade(ResourceAvailabilityRepository availabilityRepository,
-        ResourceAvailabilityReadModel availabilityReadModel, IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider, IUnitOfWork unitOfWork)
-    {
-        _availabilityRepository = availabilityRepository;
-        _availabilityReadModel = availabilityReadModel;
-        _eventsPublisher = eventsPublisher;
-        _timeProvider = timeProvider;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task CreateResourceSlots(ResourceId resourceId, TimeSlot timeslot)
     {
         var groupedAvailability = ResourceGroupedAvailability.Of(resourceId, timeslot);
-        await _availabilityRepository.SaveNew(groupedAvailability);
+        await availabilityRepository.SaveNew(groupedAvailability);
     }
 
     public async Task CreateResourceSlots(ResourceId resourceId, ResourceId parentId,
         TimeSlot timeslot)
     {
         var groupedAvailability = ResourceGroupedAvailability.Of(resourceId, timeslot, parentId);
-        await _availabilityRepository.SaveNew(groupedAvailability);
+        await availabilityRepository.SaveNew(groupedAvailability);
     }
 
     public async Task<bool> Block(ResourceId resourceId, TimeSlot timeSlot, Owner requester)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var toBlock = await FindGrouped(resourceId, timeSlot);
             return await Block(requester, toBlock);
@@ -73,7 +62,7 @@ public class AvailabilityFacade : IAvailabilityFacade
 
         if (result)
         {
-            return await _availabilityRepository.SaveCheckingVersion(toBlock);
+            return await availabilityRepository.SaveCheckingVersion(toBlock);
         }
 
         return result;
@@ -81,7 +70,7 @@ public class AvailabilityFacade : IAvailabilityFacade
 
     public async Task<bool> Release(ResourceId resourceId, TimeSlot timeSlot, Owner requester)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var toRelease = await FindGrouped(resourceId, timeSlot);
             if (toRelease.HasNoSlots)
@@ -93,7 +82,7 @@ public class AvailabilityFacade : IAvailabilityFacade
 
             if (result)
             {
-                return await _availabilityRepository.SaveCheckingVersion(toRelease);
+                return await availabilityRepository.SaveCheckingVersion(toRelease);
             }
 
             return result;
@@ -102,7 +91,7 @@ public class AvailabilityFacade : IAvailabilityFacade
 
     public async Task<bool> Disable(ResourceId resourceId, TimeSlot timeSlot, Owner requester)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var toDisable = await FindGrouped(resourceId, timeSlot);
             if (toDisable.HasNoSlots)
@@ -115,12 +104,12 @@ public class AvailabilityFacade : IAvailabilityFacade
 
             if (result)
             {
-                result = await _availabilityRepository.SaveCheckingVersion(toDisable);
+                result = await availabilityRepository.SaveCheckingVersion(toDisable);
 
                 if (result)
                 {
-                    await _eventsPublisher.Publish(new ResourceTakenOver(resourceId, previousOwners, timeSlot,
-                        _timeProvider.GetUtcNow().DateTime));
+                    await eventsPublisher.Publish(new ResourceTakenOver(resourceId, previousOwners, timeSlot,
+                        timeProvider.GetUtcNow().DateTime));
                 }
             }
 
@@ -130,11 +119,11 @@ public class AvailabilityFacade : IAvailabilityFacade
 
     public async Task<ResourceId?> BlockRandomAvailable(ISet<ResourceId> resourceIds, TimeSlot within, Owner owner)
     {
-        return await _unitOfWork.InTransaction(async () =>
+        return await unitOfWork.InTransaction(async () =>
         {
             var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
             var groupedAvailability =
-                await _availabilityRepository.LoadAvailabilitiesOfRandomResourceWithin(resourceIds, normalized);
+                await availabilityRepository.LoadAvailabilitiesOfRandomResourceWithin(resourceIds, normalized);
 
             if (await Block(owner, groupedAvailability))
             {
@@ -150,29 +139,29 @@ public class AvailabilityFacade : IAvailabilityFacade
     public async Task<ResourceGroupedAvailability> FindGrouped(ResourceId resourceId, TimeSlot within)
     {
         var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
-        return new ResourceGroupedAvailability(await _availabilityRepository.LoadAllWithinSlot(resourceId, normalized));
+        return new ResourceGroupedAvailability(await availabilityRepository.LoadAllWithinSlot(resourceId, normalized));
     }
     
     public async Task<Calendar> LoadCalendar(ResourceId resourceId, TimeSlot within) {
         var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
-        return await _availabilityReadModel.Load(resourceId, normalized);
+        return await availabilityReadModel.Load(resourceId, normalized);
     }
 
     public async Task<Calendars> LoadCalendars(ISet<ResourceId> resources, TimeSlot within) {
         var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
-        return await _availabilityReadModel.LoadAll(resources, normalized);
+        return await availabilityReadModel.LoadAll(resources, normalized);
     }
 
     public async Task<ResourceGroupedAvailability> Find(ResourceId resourceId, TimeSlot within)
     {
         var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
-        return new ResourceGroupedAvailability(await _availabilityRepository.LoadAllWithinSlot(resourceId, normalized));
+        return new ResourceGroupedAvailability(await availabilityRepository.LoadAllWithinSlot(resourceId, normalized));
     }
 
     public async Task<ResourceGroupedAvailability> FindByParentId(ResourceId parentId, TimeSlot within)
     {
         var normalized = Segments.NormalizeToSegmentBoundaries(within, DefaultSegment());
         return new ResourceGroupedAvailability(
-            await _availabilityRepository.LoadAllByParentIdWithinSlot(parentId, normalized));
+            await availabilityRepository.LoadAllByParentIdWithinSlot(parentId, normalized));
     }
 }

@@ -1,22 +1,13 @@
 namespace DomainDrivers.SmartSchedule.Tests;
 
 [Collection(nameof(SharedIntegrationTestAppCollection))]
-public abstract class IntegrationTestWithSharedApp : IntegrationTest
-{
-    protected IntegrationTestWithSharedApp(IntegrationTestAppBase app) : base(app)
-    {
-    }
-}
+public abstract class IntegrationTestWithSharedApp(IntegrationTestAppBase app) : IntegrationTest(app);
 
-public abstract class IntegrationTest : IDisposable
+public abstract class IntegrationTest(IntegrationTestAppBase app) : IDisposable
 {
-    protected IntegrationTest(IntegrationTestAppBase app)
-    {
-        // One scope per test to match java's behavior.
-        Scope = app.Services.CreateScope();
-    }
+    // One scope per test to match java's behavior.
 
-    protected IServiceScope Scope { get; }
+    protected IServiceScope Scope { get; } = app.Services.CreateScope();
 
     public void Dispose()
     {

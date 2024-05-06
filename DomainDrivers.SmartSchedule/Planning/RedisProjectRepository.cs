@@ -3,14 +3,9 @@ using StackExchange.Redis;
 
 namespace DomainDrivers.SmartSchedule.Planning;
 
-public class RedisProjectRepository : IProjectRepository
+public class RedisProjectRepository(IConnectionMultiplexer redisConnection) : IProjectRepository
 {
-    private readonly IDatabase _database;
-
-    public RedisProjectRepository(IConnectionMultiplexer redisConnection)
-    {
-        _database = redisConnection.GetDatabase();
-    }
+    private readonly IDatabase _database = redisConnection.GetDatabase();
 
     public async Task<Project> GetById(ProjectId projectId)
     {

@@ -38,19 +38,12 @@ file class DefaultPolicy : IEmployeeAllocationPolicy
     }
 }
 
-file class PermissionsInMultipleProjectsPolicy : IEmployeeAllocationPolicy
+file class PermissionsInMultipleProjectsPolicy(int howMany) : IEmployeeAllocationPolicy
 {
-    private readonly int _howMany;
-
-    public PermissionsInMultipleProjectsPolicy(int howMany)
-    {
-        _howMany = howMany;
-    }
-
     public IList<CapabilitySelector> SimultaneousCapabilitiesOf(EmployeeSummary employee)
     {
         return employee.Permissions
-            .SelectMany(permission => Enumerable.Range(0, _howMany).Select(_ => permission))
+            .SelectMany(permission => Enumerable.Range(0, howMany).Select(_ => permission))
             .Select(CapabilitySelector.CanJustPerform)
             .ToList();
     }
@@ -64,18 +57,11 @@ file class OneOfSkillsPolicy : IEmployeeAllocationPolicy
     }
 }
 
-public class CompositePolicy : IEmployeeAllocationPolicy
+public class CompositePolicy(IList<IEmployeeAllocationPolicy> policies) : IEmployeeAllocationPolicy
 {
-    private readonly IList<IEmployeeAllocationPolicy> _policies;
-
-    public CompositePolicy(IList<IEmployeeAllocationPolicy> policies)
-    {
-        _policies = policies;
-    }
-
     public IList<CapabilitySelector> SimultaneousCapabilitiesOf(EmployeeSummary employee)
     {
-        return _policies
+        return policies
             .SelectMany(p => p.SimultaneousCapabilitiesOf(employee))
             .ToList();
     }

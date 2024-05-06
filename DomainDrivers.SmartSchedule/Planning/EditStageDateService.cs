@@ -4,25 +4,18 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Planning;
 
-public class EditStageDateService
+public class EditStageDateService(
+    AllocationFacade allocationFacade,
+    IProjectRepository projectRepository,
+    IUnitOfWork unitOfWork)
 {
-    private readonly AllocationFacade _allocationFacade;
-    private readonly IProjectRepository _projectRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public EditStageDateService(AllocationFacade allocationFacade, IProjectRepository projectRepository,
-        IUnitOfWork unitOfWork)
-    {
-        _allocationFacade = allocationFacade;
-        _projectRepository = projectRepository;
-        _unitOfWork = unitOfWork;
-    }
+    private readonly AllocationFacade _allocationFacade = allocationFacade;
 
     public async Task EditStageDate(ProjectId projectId, Stage stage, TimeSlot timeSlot)
     {
-        await _unitOfWork.InTransaction(async () =>
+        await unitOfWork.InTransaction(async () =>
         {
-            var project = await _projectRepository.GetById(projectId);
+            var project = await projectRepository.GetById(projectId);
             var schedule = project.Schedule;
             //redefine schedule
             //for each stage in schedule

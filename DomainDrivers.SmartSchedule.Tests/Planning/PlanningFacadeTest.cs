@@ -46,7 +46,7 @@ public class PlanningFacadeTest
         var projectId2 = await _projectFacade.AddNewProject("project2", new Stage("Stage2"));
 
         //when
-        var loaded = await _projectFacade.LoadAll(new HashSet<ProjectId> { projectId, projectId2 });
+        var loaded = await _projectFacade.LoadAll([projectId, projectId2]);
 
         //then
         CollectionAssert.AreEquivalent(new[] { projectId, projectId2 }, loaded.Select(c => c.ProjectId));

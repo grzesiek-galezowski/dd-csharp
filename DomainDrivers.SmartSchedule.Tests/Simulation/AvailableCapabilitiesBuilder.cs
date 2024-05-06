@@ -25,7 +25,7 @@ public class AvailableCapabilitiesBuilder
 
     public AvailableCapabilitiesBuilder ThatBrings(Capability capability)
     {
-        _capabilities = new HashSet<Capability>() { capability };
+        _capabilities = new HashSet<Capability> { capability };
         _selectingPolicy = SelectingPolicy.OneOfAll;
         return this;
     }

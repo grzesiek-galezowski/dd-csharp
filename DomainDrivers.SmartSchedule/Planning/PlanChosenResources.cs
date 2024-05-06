@@ -5,42 +5,32 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Planning;
 
-public class PlanChosenResources
+public class PlanChosenResources(
+    IProjectRepository projectRepository,
+    IAvailabilityFacade availabilityFacade,
+    IEventsPublisher eventsPublisher,
+    TimeProvider timeProvider)
 {
-    private readonly IProjectRepository _projectRepository;
-    private readonly IAvailabilityFacade _availabilityFacade;
-    private readonly IEventsPublisher _eventsPublisher;
-    private readonly TimeProvider _timeProvider;
-
-    public PlanChosenResources(IProjectRepository projectRepository, IAvailabilityFacade availabilityFacade,
-        IEventsPublisher eventsPublisher, TimeProvider timeProvider)
-    {
-        _projectRepository = projectRepository;
-        _availabilityFacade = availabilityFacade;
-        _eventsPublisher = eventsPublisher;
-        _timeProvider = timeProvider;
-    }
-
     public async Task DefineResourcesWithinDates(ProjectId projectId, ISet<ResourceId> chosenResources,
         TimeSlot timeBoundaries)
     {
-        var project = await _projectRepository.GetById(projectId);
+        var project = await projectRepository.GetById(projectId);
         project.AddChosenResources(new ChosenResources(chosenResources, timeBoundaries));
-        await _projectRepository.Save(project);
-        await _eventsPublisher.Publish(new NeededResourcesChosen(projectId, chosenResources, timeBoundaries,
-            _timeProvider.GetUtcNow().DateTime));
+        await projectRepository.Save(project);
+        await eventsPublisher.Publish(new NeededResourcesChosen(projectId, chosenResources, timeBoundaries,
+            timeProvider.GetUtcNow().DateTime));
     }
 
     public async Task AdjustStagesToResourceAvailability(ProjectId projectId, TimeSlot timeBoundaries,
         params Stage[] stages)
     {
         var neededResources = NeededResources(stages);
-        var project = await _projectRepository.GetById(projectId);
+        var project = await projectRepository.GetById(projectId);
         await DefineResourcesWithinDates(projectId, neededResources, timeBoundaries);
-        var neededResourcesCalendars = await _availabilityFacade.LoadCalendars(neededResources, timeBoundaries);
+        var neededResourcesCalendars = await availabilityFacade.LoadCalendars(neededResources, timeBoundaries);
         var schedule = CreateScheduleAdjustingToCalendars(neededResourcesCalendars, stages.ToList());
         project.AddSchedule(schedule);
-        await _projectRepository.Save(project);
+        await projectRepository.Save(project);
     }
 
     private Schedule CreateScheduleAdjustingToCalendars(Calendars neededResourcesCalendars,

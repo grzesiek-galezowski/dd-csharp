@@ -13,7 +13,7 @@ namespace DomainDrivers.SmartSchedule.Tests.Allocation;
 public class PotentialTransferScenarios
 {
     private static readonly TimeSlot Jan1 = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
-    private static readonly TimeSlot FifteenMinutesInJan = new TimeSlot(Jan1.From, Jan1.From.AddMinutes(15));
+    private static readonly TimeSlot FifteenMinutesInJan = Jan1 with { To = Jan1.From.AddMinutes(15) };
 
     private static readonly Demands DemandForJavaJustFor15MinInJan = new Demands(new List<Demand>
         { new Demand(Skill("JAVA-MID"), FifteenMinutesInJan) });
@@ -102,20 +102,12 @@ public class PotentialTransferScenarios
             earnings);
     }
     
-    private class Project
+    private class Project(ProjectAllocationsId id, Demands demands, Earnings earnings)
     {
-        public ProjectAllocationsId Id { get; }
-        public Earnings Earnings { get; }
-        public Demands Demands { get; }
-        public Allocations Allocations { get; private set; }
-
-        public Project(ProjectAllocationsId id, Demands demands, Earnings earnings)
-        {
-            Id = id;
-            Demands = demands;
-            Earnings = earnings;
-            Allocations = Allocations.None();
-        }
+        public ProjectAllocationsId Id { get; } = id;
+        public Earnings Earnings { get; } = earnings;
+        public Demands Demands { get; } = demands;
+        public Allocations Allocations { get; private set; } = Allocations.None();
 
         public Allocations Add(AllocatedCapability allocatedCapability)
         {

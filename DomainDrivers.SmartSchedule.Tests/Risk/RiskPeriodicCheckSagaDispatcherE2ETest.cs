@@ -84,7 +84,7 @@ public class RiskPeriodicCheckSagaDispatcherE2ETest : IntegrationTest, IClassFix
         var projectId2 = ProjectAllocationsId.NewOne();
         //and
         var noMissingDemands =
-            new Dictionary<ProjectAllocationsId, Demands>()
+            new Dictionary<ProjectAllocationsId, Demands>
             {
                 { projectId, Demands.None() },
                 { projectId2, Demands.None() }
@@ -126,7 +126,7 @@ public class RiskPeriodicCheckSagaDispatcherE2ETest : IntegrationTest, IClassFix
         _riskPushNotification.ClearReceivedCalls();
         ItIsDaysBeforeDeadline(100);
         await _riskSagaDispatcher.Handle(new ResourceTakenOver(ResourceId.NewOne(),
-                new HashSet<Owner>() { Owner.Of(projectId.Id) }, OneDayLong, _clock.GetUtcNow().DateTime),
+                new HashSet<Owner> { Owner.Of(projectId.Id) }, OneDayLong, _clock.GetUtcNow().DateTime),
             CancellationToken.None);
 
         //then
@@ -143,7 +143,7 @@ public class RiskPeriodicCheckSagaDispatcherE2ETest : IntegrationTest, IClassFix
 
         //when
         await _riskSagaDispatcher.Handle(
-            new ResourceTakenOver(ResourceId.NewOne(), new HashSet<Owner>() { Owner.Of(unknown.Id) }, OneDayLong,
+            new ResourceTakenOver(ResourceId.NewOne(), new HashSet<Owner> { Owner.Of(unknown.Id) }, OneDayLong,
                 _clock.GetUtcNow().DateTime), CancellationToken.None);
 
         //then

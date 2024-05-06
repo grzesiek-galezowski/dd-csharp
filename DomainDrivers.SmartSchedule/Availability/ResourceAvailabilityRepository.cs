@@ -4,18 +4,11 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceAvailabilityRepository
+public class ResourceAvailabilityRepository(IDbConnection dbConnection)
 {
-    private readonly IDbConnection _dbConnection;
-
-    public ResourceAvailabilityRepository(IDbConnection dbConnection)
-    {
-        _dbConnection = dbConnection;
-    }
-
     public async Task SaveNew(ResourceAvailability resourceAvailability)
     {
-        await SaveNew(new List<ResourceAvailability>() { resourceAvailability });
+        await SaveNew(new List<ResourceAvailability> { resourceAvailability });
     }
 
     public async Task SaveNew(ResourceGroupedAvailability groupedAvailability)
@@ -25,7 +18,7 @@ public class ResourceAvailabilityRepository
 
     private async Task SaveNew(IList<ResourceAvailability> availabilities)
     {
-        var rows = availabilities.Select(x => ResourceAvailabilityRow.Map(x));
+        var rows = availabilities.Select(ResourceAvailabilityRow.Map);
         const string sql =
             $"""
              INSERT INTO availabilities
@@ -41,7 +34,7 @@ public class ResourceAvailabilityRepository
                 @{nameof(ResourceAvailabilityRow.version)}
                 )
              """;
-        await _dbConnection.ExecuteAsync(sql, rows);
+        await dbConnection.ExecuteAsync(sql, rows);
     }
 
     public async Task<IList<ResourceAvailability>> LoadAllWithinSlot(ResourceId resourceId,
@@ -60,7 +53,7 @@ public class ResourceAvailabilityRepository
                     and from_date >= @{nameof(param.FromDate)}
                     and to_date <= @{nameof(param.ToDate)}
              """;
-        var rows = await _dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
+        var rows = await dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
         return rows.Select(x => x.Map()).ToList();
     }
 
@@ -80,13 +73,13 @@ public class ResourceAvailabilityRepository
                 and from_date >= @{nameof(param.FromDate)}
                 and to_date <= @{nameof(param.ToDate)}
              """;
-        var rows = await _dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
+        var rows = await dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
         return rows.Select(x => x.Map()).ToList();
     }
 
     public async Task<bool> SaveCheckingVersion(ResourceAvailability resourceAvailability)
     {
-        return await SaveCheckingVersion(new List<ResourceAvailability>() { resourceAvailability });
+        return await SaveCheckingVersion(new List<ResourceAvailability> { resourceAvailability });
     }
 
     public async Task<bool> SaveCheckingVersion(ResourceGroupedAvailability groupedAvailability)
@@ -96,7 +89,7 @@ public class ResourceAvailabilityRepository
 
     public async Task<bool> SaveCheckingVersion(IList<ResourceAvailability> resourceAvailabilities)
     {
-        var rows = resourceAvailabilities.Select(x => ResourceAvailabilityRow.Map(x));
+        var rows = resourceAvailabilities.Select(ResourceAvailabilityRow.Map);
         const string sql =
             $"""
              UPDATE availabilities
@@ -108,7 +101,7 @@ public class ResourceAvailabilityRepository
                 id = @{nameof(ResourceAvailabilityRow.id)}
                 AND version = @{nameof(ResourceAvailabilityRow.version)}
              """;
-        var update = await _dbConnection.ExecuteAsync(sql, rows);
+        var update = await dbConnection.ExecuteAsync(sql, rows);
         return update == rows.Count();
     }
 
@@ -119,7 +112,7 @@ public class ResourceAvailabilityRepository
              select * from availabilities
              where id = @{nameof(availabilityId.Id)}
              """;
-        var row = await _dbConnection.QuerySingleAsync<ResourceAvailabilityRow>(sql, new { Id = availabilityId.Id });
+        var row = await dbConnection.QuerySingleAsync<ResourceAvailabilityRow>(sql, new { Id = availabilityId.Id });
         return row.Map();
     }
 
@@ -151,7 +144,7 @@ public class ResourceAvailabilityRepository
              SELECT a.* FROM availabilities a
              JOIN RandomResource r ON a.resource_id = r.resource_id
              """;
-        var rows = await _dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
+        var rows = await dbConnection.QueryAsync<ResourceAvailabilityRow>(sql, param);
         return new ResourceGroupedAvailability(rows.Select(x => x.Map()).ToList());
     }
 

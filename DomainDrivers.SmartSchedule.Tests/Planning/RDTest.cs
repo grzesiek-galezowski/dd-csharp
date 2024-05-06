@@ -8,25 +8,25 @@ namespace DomainDrivers.SmartSchedule.Tests.Planning;
 
 public class RDTest : IntegrationTestWithSharedApp
 {
-    static readonly TimeSlot January = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
+    private static readonly TimeSlot January = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
         DateTime.Parse("2020-01-31T00:00:00.00Z"));
 
-    static readonly TimeSlot February = new TimeSlot(DateTime.Parse("2020-02-01T00:00:00.00Z"),
+    private static readonly TimeSlot February = new TimeSlot(DateTime.Parse("2020-02-01T00:00:00.00Z"),
         DateTime.Parse("2020-02-28T00:00:00.00Z"));
 
-    static readonly TimeSlot March = new TimeSlot(DateTime.Parse("2020-03-01T00:00:00.00Z"),
+    private static readonly TimeSlot March = new TimeSlot(DateTime.Parse("2020-03-01T00:00:00.00Z"),
         DateTime.Parse("2020-03-31T00:00:00.00Z"));
 
-    static readonly TimeSlot Q1 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
+    private static readonly TimeSlot Q1 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
         DateTime.Parse("2020-03-31T00:00:00.00Z"));
 
-    static readonly TimeSlot Jan1_4 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
+    private static readonly TimeSlot Jan1_4 = new TimeSlot(DateTime.Parse("2020-01-01T00:00:00.00Z"),
         DateTime.Parse("2020-01-04T00:00:00.00Z"));
 
-    static readonly TimeSlot Feb2_16 = new TimeSlot(DateTime.Parse("2020-02-01T00:00:00.00Z"),
+    private static readonly TimeSlot Feb2_16 = new TimeSlot(DateTime.Parse("2020-02-01T00:00:00.00Z"),
         DateTime.Parse("2020-02-16T00:00:00.00Z"));
 
-    static readonly TimeSlot Mar1_6 = new TimeSlot(DateTime.Parse("2020-03-01T00:00:00.00Z"),
+    private static readonly TimeSlot Mar1_6 = new TimeSlot(DateTime.Parse("2020-03-01T00:00:00.00Z"),
         DateTime.Parse("2020-03-06T00:00:00.00Z"));
 
     private readonly PlanningFacade _projectFacade;
@@ -57,14 +57,14 @@ public class RDTest : IntegrationTestWithSharedApp
 
         //then
         VerifyThatResourcesAreMissing(projectId,
-            new HashSet<ResourceId> { phpAvailableInFebruary, csharpAvailableInMarch });
+            [phpAvailableInFebruary, csharpAvailableInMarch]);
 
         //when
         await _projectFacade.DefineResourcesWithinDates(projectId, allResources, February);
 
         //then
         VerifyThatResourcesAreMissing(projectId,
-            new HashSet<ResourceId> { javaAvailableInJanuary, csharpAvailableInMarch });
+            [javaAvailableInJanuary, csharpAvailableInMarch]);
 
         //when
         await _projectFacade.DefineResourcesWithinDates(projectId, allResources, Q1);

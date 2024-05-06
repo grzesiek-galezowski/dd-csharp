@@ -12,15 +12,20 @@ public class AllocationPoliciesTest
     public void DefaultPolicyShouldReturnJustOneSkillAtOnce()
     {
         //given
-        var employee = new EmployeeSummary(EmployeeId.NewOne(), "resourceName", "lastName", Seniority.LEAD,
-            Capability.Skills("JAVA"), Capability.Permissions("ADMIN"));
+        var employee = new EmployeeSummary(
+            EmployeeId.NewOne(),
+            "resourceName",
+            "lastName",
+            Seniority.LEAD,
+            Skills("JAVA"),
+            Permissions("ADMIN"));
 
         //when
-        var capabilities = IEmployeeAllocationPolicy.DefaultPolicy().SimultaneousCapabilitiesOf(employee);
+        var capabilities = DefaultPolicy().SimultaneousCapabilitiesOf(employee);
 
         //then
         Assert.Single(capabilities);
-        CollectionAssert.AreEquivalent(new HashSet<Capability>() { Permission("ADMIN"), Skill("JAVA") },
+        CollectionAssert.AreEquivalent(new HashSet<Capability> { Permission("ADMIN"), Skill("JAVA") },
             capabilities[0].Capabilities);
     }
 
@@ -30,7 +35,7 @@ public class AllocationPoliciesTest
         //given
         var policy = PermissionsInMultipleProjects(3);
         var employee = new EmployeeSummary(EmployeeId.NewOne(), "resourceName", "lastName", Seniority.LEAD,
-            Capability.Skills("JAVA"), Capability.Permissions("ADMIN"));
+            Skills("JAVA"), Permissions("ADMIN"));
 
         //when
         var capabilities = policy.SimultaneousCapabilitiesOf(employee);
@@ -38,7 +43,7 @@ public class AllocationPoliciesTest
         //then
         Assert.Equal(3, capabilities.Count);
 
-        CollectionAssert.AreEquivalent(new List<Capability>() { Permission("ADMIN"), Permission("ADMIN"), Permission("ADMIN") },
+        CollectionAssert.AreEquivalent(new List<Capability> { Permission("ADMIN"), Permission("ADMIN"), Permission("ADMIN") },
             capabilities.SelectMany(cap => cap.Capabilities));
     }
 
@@ -46,9 +51,9 @@ public class AllocationPoliciesTest
     public void CanCreateCompositePolicy()
     {
         //given
-        var policy = Simultaneous(PermissionsInMultipleProjects(3), IEmployeeAllocationPolicy.OneOfSkills());
+        var policy = Simultaneous(PermissionsInMultipleProjects(3), OneOfSkills());
         var employee = new EmployeeSummary(EmployeeId.NewOne(), "resourceName", "lastName", Seniority.LEAD,
-            Capability.Skills("JAVA", "PYTHON"), Capability.Permissions("ADMIN"));
+            Skills("JAVA", "PYTHON"), Permissions("ADMIN"));
 
         //when
         var capabilities = policy.SimultaneousCapabilitiesOf(employee);
@@ -56,9 +61,9 @@ public class AllocationPoliciesTest
         //then
         Assert.Equal(4, capabilities.Count);
         CollectionAssert.AreEquivalent(
-            new List<CapabilitySelector>()
+            new List<CapabilitySelector>
             {
-                CapabilitySelector.CanPerformOneOf(Capability.Skills("JAVA", "PYTHON")),
+                CapabilitySelector.CanPerformOneOf(Skills("JAVA", "PYTHON")),
                 CapabilitySelector.CanJustPerform(Permission("ADMIN")),
                 CapabilitySelector.CanJustPerform(Permission("ADMIN")),
                 CapabilitySelector.CanJustPerform(Permission("ADMIN"))

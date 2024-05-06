@@ -3,18 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule.Resource.Employee;
 
-public class EmployeeRepository
+public class EmployeeRepository(IEmployeeDbContext employeeDbContext)
 {
-    private readonly IEmployeeDbContext _employeeDbContext;
-
-    public EmployeeRepository(IEmployeeDbContext employeeDbContext)
-    {
-        _employeeDbContext = employeeDbContext;
-    }
-
     public async Task<EmployeeSummary> FindSummary(EmployeeId employeeId)
     {
-        var employee = await _employeeDbContext.Employees.SingleAsync(x => x.Id == employeeId);
+        var employee = await employeeDbContext.Employees.SingleAsync(x => x.Id == employeeId);
         
         var skills = FilterCapabilities(employee.Capabilities, cap => cap.IsOfType("SKILL"));
         var permissions = FilterCapabilities(employee.Capabilities, cap => cap.IsOfType("PERMISSION"));
@@ -23,7 +16,7 @@ public class EmployeeRepository
 
     public async Task<IList<Capability>> FindAllCapabilities()
     {
-        return (await _employeeDbContext.Employees.ToListAsync())
+        return (await employeeDbContext.Employees.ToListAsync())
             .SelectMany(employee => employee.Capabilities)
             .ToList();
     }
@@ -35,6 +28,6 @@ public class EmployeeRepository
 
     public async Task Add(Employee employee)
     {
-        await _employeeDbContext.Employees.AddAsync(employee);
+        await employeeDbContext.Employees.AddAsync(employee);
     }
 }

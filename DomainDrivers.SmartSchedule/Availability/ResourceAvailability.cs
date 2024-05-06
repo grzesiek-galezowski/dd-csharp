@@ -2,55 +2,34 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceAvailability
+public class ResourceAvailability(
+    ResourceAvailabilityId id,
+    ResourceId resourceId,
+    ResourceId resourceParentId,
+    TimeSlot segment,
+    Blockade blockade,
+    int version)
 {
-    public ResourceAvailabilityId Id { get; }
-    public ResourceId ResourceId { get; }
-    public ResourceId ResourceParentId { get; }
-    public TimeSlot Segment { get; }
-    public Blockade Blockade { get; private set; }
-    public int Version { get; private set; }
+    public ResourceAvailabilityId Id { get; } = id;
+    public ResourceId ResourceId { get; } = resourceId;
+    public ResourceId ResourceParentId { get; } = resourceParentId;
+    public TimeSlot Segment { get; } = segment;
+    public Blockade Blockade { get; private set; } = blockade;
+    public int Version { get; private set; } = version;
 
-    public ResourceAvailability(ResourceAvailabilityId id, ResourceId resourceId,
-        ResourceId resourceParentId, TimeSlot segment, Blockade blockade, int version)
+    public ResourceAvailability(ResourceAvailabilityId availabilityId, ResourceId resourceId,
+        TimeSlot segment) : this(availabilityId, resourceId, ResourceId.None(), segment, Blockade.None(), 0)
     {
-        Id = id;
-        ResourceId = resourceId;
-        ResourceParentId = resourceParentId;
-        Segment = segment;
-        Blockade = blockade;
-        Version = version;
     }
 
     public ResourceAvailability(ResourceAvailabilityId availabilityId, ResourceId resourceId,
-        TimeSlot segment)
+        ResourceId resourceParentId, TimeSlot segment) : this(availabilityId, resourceId, resourceParentId, segment, Blockade.None(), 0)
     {
-        Id = availabilityId;
-        ResourceId = resourceId;
-        ResourceParentId = ResourceId.None();
-        Segment = segment;
-        Blockade = Blockade.None();
     }
 
-    public ResourceAvailability(ResourceAvailabilityId availabilityId, ResourceId resourceId,
-        ResourceId resourceParentId, TimeSlot segment)
-    {
-        Id = availabilityId;
-        ResourceId = resourceId;
-        ResourceParentId = resourceParentId;
-        Segment = segment;
-        Blockade = Blockade.None();
-    }
+    public Owner BlockedBy => Blockade.TakenBy;
 
-    public Owner BlockedBy
-    {
-        get { return Blockade.TakenBy; }
-    }
-
-    public bool IsDisabled
-    {
-        get { return Blockade.Disabled; }
-    }
+    public bool IsDisabled => Blockade.Disabled;
 
     public bool Block(Owner requester)
     {

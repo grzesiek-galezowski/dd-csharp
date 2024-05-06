@@ -6,7 +6,7 @@ public static class SlotToSegments
 {
     public static IList<TimeSlot> Apply(TimeSlot timeSlot, SegmentInMinutes duration)
     {
-        var minimalSegment = new TimeSlot(timeSlot.From, timeSlot.From.AddMinutes(duration.Value));
+        var minimalSegment = timeSlot with { To = timeSlot.From.AddMinutes(duration.Value) };
 
         if (timeSlot.Within(minimalSegment))
         {

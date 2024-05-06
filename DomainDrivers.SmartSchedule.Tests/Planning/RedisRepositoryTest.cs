@@ -81,12 +81,12 @@ public class RedisRepositoryTest : IntegrationTest, IAsyncLifetime, IClassFixtur
 
         //when
         var loaded =
-            await _redisProjectRepository.FindAllByIdIn(new HashSet<ProjectId>() { project.Id, project2.Id });
+            await _redisProjectRepository.FindAllByIdIn(new HashSet<ProjectId> { project.Id, project2.Id });
 
         //then
         Assert.Equal(2, loaded.Count);
         var ids = loaded.Select(x => x.Id).ToHashSet();
-        CollectionAssert.AreEquivalent(new HashSet<ProjectId>() { project2.Id, project.Id }, ids);
+        CollectionAssert.AreEquivalent(new HashSet<ProjectId> { project2.Id, project.Id }, ids);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class RedisRepositoryTest : IntegrationTest, IAsyncLifetime, IClassFixtur
         //then
         Assert.Equal(2, loaded.Count);
         var ids = loaded.Select(x => x.Id).ToHashSet();
-        CollectionAssert.AreEquivalent(new HashSet<ProjectId>() { project2.Id, project.Id }, ids);
+        CollectionAssert.AreEquivalent(new HashSet<ProjectId> { project2.Id, project.Id }, ids);
     }
 
     public Task InitializeAsync()
@@ -173,10 +173,7 @@ public class RedisFixture : IAsyncLifetime
         .WithImage("redis:5.0.3-alpine")
         .Build();
 
-    public string ConnectionString
-    {
-        get { return _redis.GetConnectionString(); }
-    }
+    public string ConnectionString => _redis.GetConnectionString();
 
     public async Task InitializeAsync()
     {

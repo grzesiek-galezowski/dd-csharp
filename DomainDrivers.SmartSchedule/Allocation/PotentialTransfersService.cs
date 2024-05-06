@@ -6,28 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule.Allocation;
 
-public class PotentialTransfersService
+public class PotentialTransfersService(
+    SimulationFacade simulationFacade,
+    CashFlowFacade cashFlowFacade,
+    IAllocationDbContext allocationDbContext)
 {
-    private readonly SimulationFacade _simulationFacade;
-    private readonly CashFlowFacade _cashFlowFacade;
-    private readonly IAllocationDbContext _allocationDbContext;
-
-    public PotentialTransfersService(SimulationFacade simulationFacade, CashFlowFacade cashFlowFacade,
-        IAllocationDbContext allocationDbContext)
-    {
-        _simulationFacade = simulationFacade;
-        _cashFlowFacade = cashFlowFacade;
-        _allocationDbContext = allocationDbContext;
-    }
-
     public async Task<double> ProfitAfterMovingCapabilities(ProjectAllocationsId projectId,
         AllocatableCapabilitySummary capabilityToMove, TimeSlot timeSlot)
     {
         //cached?
         var potentialTransfers =
             new PotentialTransfers(
-                ProjectsAllocationsSummary.Of(await _allocationDbContext.ProjectAllocations.ToListAsync()),
-                await _cashFlowFacade.FindAllEarnings());
+                ProjectsAllocationsSummary.Of(await allocationDbContext.ProjectAllocations.ToListAsync()),
+                await cashFlowFacade.FindAllEarnings());
         return CheckPotentialTransfer(potentialTransfers, projectId, capabilityToMove, timeSlot);
     }
 
@@ -35,10 +26,10 @@ public class PotentialTransfersService
         AllocatableCapabilitySummary capabilityToMove, TimeSlot forSlot)
     {
         var resultBefore =
-            _simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
+            simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
         transfers = transfers.Transfer(projectTo, capabilityToMove, forSlot);
         var resultAfter =
-            _simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
+            simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
         return resultAfter.Profit - resultBefore.Profit;
     }
 
@@ -46,10 +37,10 @@ public class PotentialTransfersService
         ProjectAllocationsId projectTo, AllocatedCapability capability, TimeSlot forSlot)
     {
         var resultBefore =
-            _simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
+            simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
         transfers = transfers.Transfer(projectFrom, projectTo, capability, forSlot);
         var resultAfter =
-            _simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
+            simulationFacade.WhatIsTheOptimalSetup(transfers.ToSimulatedProjects(), SimulatedCapabilities.None());
         return resultAfter.Profit - resultBefore.Profit;
     }
 }

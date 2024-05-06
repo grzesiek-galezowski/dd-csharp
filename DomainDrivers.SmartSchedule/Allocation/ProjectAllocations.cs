@@ -15,17 +15,12 @@ public class ProjectAllocations
 
     public TimeSlot? TimeSlot
     {
-        get
-        {
-            return _timeSlot;
-        }
-        private set
-        {
+        get => _timeSlot;
+        private set =>
             //https://learn.microsoft.com/en-us/ef/core/modeling/owned-entities#by-design-restrictions
             _timeSlot = value == null
                 ? null
                 : new TimeSlot(value.From, value.To);
-        }
     }
 
     public ProjectAllocations(ProjectAllocationsId projectId, Allocations allocations, Demands scheduledDemands,
@@ -103,10 +98,7 @@ public class ProjectAllocations
     }
 
     [MemberNotNullWhen(true, nameof(TimeSlot))]
-    public bool HasTimeSlot
-    {
-        get { return TimeSlot != null && TimeSlot != TimeSlot.Empty(); }
-    }
+    public bool HasTimeSlot => TimeSlot != null && TimeSlot != TimeSlot.Empty();
 
     public ProjectAllocationScheduled? DefineSlot(TimeSlot timeSlot, DateTime when)
     {

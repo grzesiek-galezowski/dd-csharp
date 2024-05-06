@@ -9,33 +9,24 @@ using ProjectId = DomainDrivers.SmartSchedule.Simulation.ProjectId;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
-public class VerifyEnoughDemandsDuringPlanning : INotificationHandler<CapabilitiesDemanded>
+public class VerifyEnoughDemandsDuringPlanning(
+    PlanningFacade planningFacade,
+    SimulationFacade simulationFacade,
+    ResourceFacade resourceFacade,
+    IRiskPushNotification riskPushNotification)
+    : INotificationHandler<CapabilitiesDemanded>
 {
     private const int SameArbitraryValueForEveryProject = 100;
-
-    private readonly PlanningFacade _planningFacade;
-    private readonly SimulationFacade _simulationFacade;
-    private readonly ResourceFacade _resourceFacade;
-    private readonly IRiskPushNotification _riskPushNotification;
-
-    public VerifyEnoughDemandsDuringPlanning(PlanningFacade planningFacade, SimulationFacade simulationFacade,
-        ResourceFacade resourceFacade, IRiskPushNotification riskPushNotification)
-    {
-        _planningFacade = planningFacade;
-        _simulationFacade = simulationFacade;
-        _resourceFacade = resourceFacade;
-        _riskPushNotification = riskPushNotification;
-    }
 
 
     public async Task Handle(CapabilitiesDemanded capabilitiesDemanded, CancellationToken cancellationToken)
     {
-        var projectSummaries = await _planningFacade.LoadAll();
-        var allCapabilities = await _resourceFacade.FindAllCapabilities();
+        var projectSummaries = await planningFacade.LoadAll();
+        var allCapabilities = await resourceFacade.FindAllCapabilities();
 
         if (NotAbleToHandleAllProjectsGivenCapabilities(projectSummaries, allCapabilities))
         {
-            _riskPushNotification.NotifyAboutPossibleRiskDuringPlanning(capabilitiesDemanded.ProjectId,
+            riskPushNotification.NotifyAboutPossibleRiskDuringPlanning(capabilitiesDemanded.ProjectId,
                 capabilitiesDemanded.Demands);
         }
     }
@@ -49,10 +40,10 @@ public class VerifyEnoughDemandsDuringPlanning : INotificationHandler<Capabiliti
                     TimeSlot.Empty()))
             .ToList();
         var simulatedProjects = projectSummaries
-            .Select(x => CreateSamePriceSimulatedProject(x))
+            .Select(CreateSamePriceSimulatedProject)
             .ToList();
         var result =
-            _simulationFacade.WhatIsTheOptimalSetup(simulatedProjects, new SimulatedCapabilities(capabilities));
+            simulationFacade.WhatIsTheOptimalSetup(simulatedProjects, new SimulatedCapabilities(capabilities));
         return result.ChosenItems.Count != projectSummaries.Count;
     }
 

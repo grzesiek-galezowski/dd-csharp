@@ -15,23 +15,16 @@ public interface ICapabilityFinder
     Task<AllocatableCapabilitySummary?> FindById(AllocatableCapabilityId allocatableCapabilityId);
 }
 
-public class CapabilityFinder : ICapabilityFinder
+public class CapabilityFinder(
+    IAvailabilityFacade availabilityFacade,
+    AllocatableCapabilityRepository allocatableResourceRepository)
+    : ICapabilityFinder
 {
-    private readonly IAvailabilityFacade _availabilityFacade;
-    private readonly AllocatableCapabilityRepository _allocatableResourceRepository;
-
-    public CapabilityFinder(IAvailabilityFacade availabilityFacade,
-        AllocatableCapabilityRepository allocatableResourceRepository)
-    {
-        _availabilityFacade = availabilityFacade;
-        _allocatableResourceRepository = allocatableResourceRepository;
-    }
-
     public async Task<AllocatableCapabilitiesSummary> FindAvailableCapabilities(Capability capability,
         TimeSlot timeSlot)
     {
         var findAllocatableCapability =
-            await _allocatableResourceRepository.FindByCapabilityWithin(capability.Name, capability.Type, timeSlot.From,
+            await allocatableResourceRepository.FindByCapabilityWithin(capability.Name, capability.Type, timeSlot.From,
                 timeSlot.To);
         var found = await FilterAvailabilityInTimeSlot(findAllocatableCapability, timeSlot);
         return CreateSummary(found);
@@ -39,20 +32,20 @@ public class CapabilityFinder : ICapabilityFinder
 
     public async Task<AllocatableCapabilitiesSummary> FindCapabilities(Capability capability, TimeSlot timeSlot)
     {
-        var found = await _allocatableResourceRepository.FindByCapabilityWithin(capability.Name, capability.Type,
+        var found = await allocatableResourceRepository.FindByCapabilityWithin(capability.Name, capability.Type,
             timeSlot.From, timeSlot.To);
         return CreateSummary(found);
     }
 
     public async Task<AllocatableCapabilitiesSummary> FindById(IList<AllocatableCapabilityId> allocatableCapabilityIds)
     {
-        var allByIdIn = await _allocatableResourceRepository.FindAllById(allocatableCapabilityIds);
+        var allByIdIn = await allocatableResourceRepository.FindAllById(allocatableCapabilityIds);
         return CreateSummary(allByIdIn);
     }
 
     public async Task<AllocatableCapabilitySummary?> FindById(AllocatableCapabilityId allocatableCapabilityId)
     {
-        var allocatableCapability = await _allocatableResourceRepository.FindById(allocatableCapabilityId);
+        var allocatableCapability = await allocatableResourceRepository.FindById(allocatableCapabilityId);
         
         if (allocatableCapability == null)
         {
@@ -69,7 +62,7 @@ public class CapabilityFinder : ICapabilityFinder
             findAllocatableCapability
                 .Select(ac => ac.Id.ToAvailabilityResourceId())
                 .ToHashSet();
-        var calendars = await _availabilityFacade.LoadCalendars(resourceIds, timeSlot);
+        var calendars = await availabilityFacade.LoadCalendars(resourceIds, timeSlot);
         return findAllocatableCapability
             .Where(ac => calendars.CalendarsDictionary[ac.Id.ToAvailabilityResourceId()].AvailableSlots()
                 .Contains(timeSlot))
@@ -79,7 +72,7 @@ public class CapabilityFinder : ICapabilityFinder
     private AllocatableCapabilitiesSummary CreateSummary(IList<AllocatableCapability> from)
     {
         return new AllocatableCapabilitiesSummary(from
-            .Select(allocatableCapability => CreateSummary(allocatableCapability)).ToList());
+            .Select(CreateSummary).ToList());
     }
 
     private AllocatableCapabilitySummary CreateSummary(AllocatableCapability allocatableCapability)
