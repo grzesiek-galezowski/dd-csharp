@@ -7,6 +7,7 @@ using DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 using DomainDrivers.SmartSchedule.Allocation.Cashflow;
 using DomainDrivers.SmartSchedule.Optimization;
 using DomainDrivers.SmartSchedule.Planning;
+using DomainDrivers.SmartSchedule.Planning.Parallelization;
 using DomainDrivers.SmartSchedule.Resource;
 using DomainDrivers.SmartSchedule.Resource.Device;
 using DomainDrivers.SmartSchedule.Resource.Employee;
@@ -30,8 +31,34 @@ var dataSource = new NpgsqlDataSourceBuilder(postgresConnectionString)
 builder.Services.AddDbContext<SmartScheduleDbContext>(options => { options.UseNpgsql(dataSource); });
 builder.Services.AddScoped<IDbConnection>(sp => sp.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection());
 builder.Services.AddShared();
-builder.Services.AddPlanning();
-builder.Services.AddAvailability();
+
+// planning
+builder.Services.AddScoped<IProjectRepository>(x => 
+    new RedisProjectRepository(x.GetRequiredService<IConnectionMultiplexer>()));
+builder.Services.AddTransient<PlanningFacade>(x =>
+{
+    var requiredService = x.GetRequiredService<IEventsPublisher>();
+    var timeProvider = x.GetRequiredService<TimeProvider>();
+
+    return new PlanningFacade(
+        x.GetRequiredService<IProjectRepository>(), //must be in container
+        new StageParallelization(),
+        new PlanChosenResources(
+            x.GetRequiredService<IProjectRepository>(),
+            x.GetRequiredService<IAvailabilityFacade>(),
+            requiredService,
+            timeProvider),
+        requiredService,
+        timeProvider);
+});
+
+
+//
+builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>();
+builder.Services.AddTransient<ResourceAvailabilityRepository>();
+builder.Services.AddTransient<ResourceAvailabilityReadModel>();
+
+
 builder.Services.AddAllocation();
 builder.Services.AddCashFlow();
 builder.Services.AddEmployee();

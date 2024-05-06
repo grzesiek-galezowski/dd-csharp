@@ -10,6 +10,7 @@ public static class PlanningConfiguration
         serviceCollection.AddTransient<PlanChosenResources>();
         serviceCollection.AddTransient<StageParallelization>();
         serviceCollection.AddTransient<PlanningFacade>();
+
         return serviceCollection;
     }
 }
