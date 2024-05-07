@@ -54,22 +54,16 @@ public class Program
 
 // planning
         builder.Services.AddScoped<IProjectRepository>(x => 
-            new RedisProjectRepository(x.GetRequiredService<Root>().RedisConnectionMultiplexer));
+            x.GetRequiredService<Root>().CreateRedisProjectRepository());
         builder.Services.AddTransient<PlanningFacade>(x =>
         {
-            var eventsPublisher = x.GetRequiredService<Root>().CreateEventsPublisher(x.GetRequiredService<IMediator>());
             var timeProvider = x.GetRequiredService<TimeProvider>();
 
-            return new PlanningFacade(
-                x.GetRequiredService<IProjectRepository>(), //must be in container
-                new StageParallelization(),
-                new PlanChosenResources(
-                    x.GetRequiredService<IProjectRepository>(),
-                    x.GetRequiredService<IAvailabilityFacade>(),
-                    eventsPublisher,
-                    timeProvider),
-                eventsPublisher,
-                timeProvider);
+            return x.GetRequiredService<Root>().CreatePlanningFacade(
+                x.GetRequiredService<IProjectRepository>(), 
+                timeProvider, 
+                x.GetRequiredService<IAvailabilityFacade>(), 
+                x.GetRequiredService<IMediator>());
         });
 
 
@@ -184,6 +178,27 @@ public class Root
     }
 
     public IConnectionMultiplexer RedisConnectionMultiplexer { get; }
+
+    public RedisProjectRepository CreateRedisProjectRepository()
+    {
+        return new RedisProjectRepository(RedisConnectionMultiplexer);
+    }
+
+    public PlanningFacade CreatePlanningFacade(IProjectRepository projectRepository, TimeProvider timeProvider,
+        IAvailabilityFacade availabilityFacade, IMediator mediator)
+    {
+        var eventsPublisher = CreateEventsPublisher(mediator);
+        return new PlanningFacade(
+            projectRepository, //must be in container
+            new StageParallelization(),
+            new PlanChosenResources(
+                projectRepository,
+                availabilityFacade,
+                eventsPublisher,
+                timeProvider),
+            eventsPublisher,
+            timeProvider);
+    }
 }
 
 public static class TestConfiguration
