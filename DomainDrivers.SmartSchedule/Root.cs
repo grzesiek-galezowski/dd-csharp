@@ -198,7 +198,6 @@ public class Root
         RiskPeriodicCheckSagaRepository riskPeriodicCheckSagaRepository,
         ICashflowRepository cashflowRepository,
         IEventsPublisher eventsPublisher,
-        IAllocationDbContext allocationDbContext,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         AllocatableCapabilityRepository allocatableCapabilityRepository,
@@ -208,8 +207,7 @@ public class Root
             riskPeriodicCheckSagaRepository,
             CreatePotentialTransfersService(
                 cashflowRepository,
-                eventsPublisher,
-                allocationDbContext,
+                eventsPublisher, 
                 smartScheduleDbContext),
             CreateCapabilityFinder(
                 resourceAvailabilityRepository,
@@ -224,7 +222,6 @@ public class Root
     public PotentialTransfersService CreatePotentialTransfersService(
         ICashflowRepository cashflowRepository,
         IEventsPublisher eventsPublisher,
-        IAllocationDbContext allocationDbContext,
         SmartScheduleDbContext smartScheduleDbContext)
     {
         return new PotentialTransfersService(
@@ -233,7 +230,7 @@ public class Root
                 cashflowRepository,
                 eventsPublisher, 
                 smartScheduleDbContext),
-            allocationDbContext);
+            smartScheduleDbContext);
     }
 
     public VerifyNeededResourcesAvailableInTimeSlot CreateVerifyNeededResourcesAvailableInTimeSlot(
