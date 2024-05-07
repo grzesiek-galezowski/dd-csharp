@@ -15,8 +15,8 @@ public static class RiskConfiguration
         serviceCollection.AddTransient<MediatrRiskPeriodicCheckSagaDispatcher>();
         serviceCollection.AddScoped<RiskPeriodicCheckSagaRepository>();
         serviceCollection.AddTransient<IRiskPushNotification, RiskPushNotification>();
-        serviceCollection.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>();
-        serviceCollection.AddTransient<VerifyEnoughDemandsDuringPlanning>();
+        serviceCollection.AddTransient<MediatrVerifyCriticalResourceAvailableDuringPlanning>();
+        serviceCollection.AddTransient<MediatrVerifyEnoughDemandsDuringPlanning>();
         serviceCollection.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>();
         serviceCollection.AddQuartz(q =>
         {

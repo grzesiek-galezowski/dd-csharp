@@ -291,30 +291,29 @@ public class Root
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         IUnitOfWork unitOfWork,
-        IMediator mediator,
         EmployeeRepository employeeRepository,
         DeviceRepository deviceRepository,
         AllocatableCapabilityRepository allocatableCapabilityRepository,
         IRiskPushNotification riskPushNotification)
     {
         return new VerifyEnoughDemandsDuringPlanning(
-            CreatePlanningFacade(projectRepository,
-                timeProvider,
-                resourceAvailabilityRepository,
-                smartScheduleDbContext,
-                eventsPublisher,
-                unitOfWork),
-            CreateSimulationFacade(),
-            CreateResourceFacade(
-                employeeRepository,
-                unitOfWork,
-                deviceRepository, 
-                resourceAvailabilityRepository, 
-                smartScheduleDbContext, 
-                eventsPublisher, 
-                timeProvider, 
-                allocatableCapabilityRepository),
-            riskPushNotification);
+                CreatePlanningFacade(projectRepository,
+                    timeProvider,
+                    resourceAvailabilityRepository,
+                    smartScheduleDbContext,
+                    eventsPublisher,
+                    unitOfWork),
+                CreateSimulationFacade(),
+                CreateResourceFacade(
+                    employeeRepository,
+                    unitOfWork,
+                    deviceRepository, 
+                    resourceAvailabilityRepository, 
+                    smartScheduleDbContext, 
+                    eventsPublisher, 
+                    timeProvider, 
+                    allocatableCapabilityRepository),
+                riskPushNotification);
     }
 
     public PlanningFacade CreatePlanningFacade(
@@ -340,5 +339,23 @@ public class Root
                 timeProvider),
             eventsPublisher,
             timeProvider);
+    }
+
+    public VerifyCriticalResourceAvailableDuringPlanning CreateVerifyCriticalResourceAvailableDuringPlanning(
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork,
+        IRiskPushNotification riskPushNotification)
+    {
+        return new VerifyCriticalResourceAvailableDuringPlanning(
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository,
+                smartScheduleDbContext,
+                eventsPublisher,
+                timeProvider,
+                unitOfWork),
+            riskPushNotification);
     }
 }

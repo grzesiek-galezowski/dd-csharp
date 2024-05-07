@@ -196,40 +196,44 @@ public class Program
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddScoped<RiskPeriodicCheckSagaRepository>();
 
-        builder.Services.AddTransient<RiskPeriodicCheckSagaDispatcher>(x => 
-            x.GetRequiredService<Root>().CreateRiskPeriodicCheckSagaDispatcher(
-            x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
-            x.GetRequiredService<ICashflowRepository>(),
-            x.GetRequiredService<IEventsPublisher>(),
-            x.GetRequiredService<TimeProvider>(),
-            x.GetRequiredService<IUnitOfWork>(),
-            x.GetRequiredService<IAllocationDbContext>(),
-            x.GetRequiredService<ResourceAvailabilityRepository>(),
-            x.GetRequiredService<SmartScheduleDbContext>(),
-            x.GetRequiredService<AllocatableCapabilityRepository>(),
-            x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<RiskPeriodicCheckSagaDispatcher>(x =>
+            x.GetRequiredService<Root>()
+                .CreateRiskPeriodicCheckSagaDispatcher(
+                    x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
+                    x.GetRequiredService<ICashflowRepository>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<IAllocationDbContext>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<AllocatableCapabilityRepository>(),
+                    x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<MediatrRiskPeriodicCheckSagaDispatcher>();
 
         builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x =>
             new RiskPushNotification()); //do not replace this - needed by the tests
+        builder.Services.AddTransient<MediatrVerifyCriticalResourceAvailableDuringPlanning>();
+        builder.Services.AddTransient<MediatrVerifyEnoughDemandsDuringPlanning>();
+
         builder.Services.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>(x =>
-            new VerifyCriticalResourceAvailableDuringPlanning(
-                x.GetRequiredService<Root>().CreateAvailabilityFacade(
+            x.GetRequiredService<Root>()
+                .CreateVerifyCriticalResourceAvailableDuringPlanning(
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>()),
-                x.GetRequiredService<IRiskPushNotification>()));
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x =>
             x.GetRequiredService<Root>()
-                .CreateVerifyEnoughDemandsDuringPlanning(x.GetRequiredService<IProjectRepository>(),
+                .CreateVerifyEnoughDemandsDuringPlanning(
+                    x.GetRequiredService<IProjectRepository>(),
                     x.GetRequiredService<TimeProvider>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<IUnitOfWork>(),
-                    x.GetRequiredService<IMediator>(),
                     x.GetRequiredService<EmployeeRepository>(),
                     x.GetRequiredService<DeviceRepository>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>(),

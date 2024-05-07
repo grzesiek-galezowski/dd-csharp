@@ -1,14 +1,12 @@
 using DomainDrivers.SmartSchedule.Availability;
 using DomainDrivers.SmartSchedule.Planning;
 using DomainDrivers.SmartSchedule.Shared;
-using MediatR;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
 public class VerifyCriticalResourceAvailableDuringPlanning(
     IAvailabilityFacade availabilityFacade,
     IRiskPushNotification riskPushNotification)
-    : INotificationHandler<CriticalStagePlanned>
 {
     public async Task Handle(CriticalStagePlanned criticalStagePlanned, CancellationToken cancellationToken)
     {

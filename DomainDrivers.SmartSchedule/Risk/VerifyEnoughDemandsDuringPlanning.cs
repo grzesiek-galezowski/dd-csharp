@@ -2,7 +2,6 @@ using DomainDrivers.SmartSchedule.Planning;
 using DomainDrivers.SmartSchedule.Resource;
 using DomainDrivers.SmartSchedule.Shared;
 using DomainDrivers.SmartSchedule.Simulation;
-using MediatR;
 using Demand = DomainDrivers.SmartSchedule.Simulation.Demand;
 using Demands = DomainDrivers.SmartSchedule.Simulation.Demands;
 using ProjectId = DomainDrivers.SmartSchedule.Simulation.ProjectId;
@@ -14,10 +13,8 @@ public class VerifyEnoughDemandsDuringPlanning(
     SimulationFacade simulationFacade,
     ResourceFacade resourceFacade,
     IRiskPushNotification riskPushNotification)
-    : INotificationHandler<CapabilitiesDemanded>
 {
     private const int SameArbitraryValueForEveryProject = 100;
-
 
     public async Task Handle(CapabilitiesDemanded capabilitiesDemanded, CancellationToken cancellationToken)
     {
@@ -31,7 +28,8 @@ public class VerifyEnoughDemandsDuringPlanning(
         }
     }
 
-    private bool NotAbleToHandleAllProjectsGivenCapabilities(IList<ProjectCard> projectSummaries,
+    private bool NotAbleToHandleAllProjectsGivenCapabilities(
+        IList<ProjectCard> projectSummaries,
         IList<Capability> allCapabilities)
     {
         var capabilities = allCapabilities
@@ -41,7 +39,7 @@ public class VerifyEnoughDemandsDuringPlanning(
             .ToList();
         var simulatedProjects = projectSummaries
             .Select(CreateSamePriceSimulatedProject)
-            .ToList();
+            .ToList<SimulatedProject>();
         var result =
             simulationFacade.WhatIsTheOptimalSetup(simulatedProjects, new SimulatedCapabilities(capabilities));
         return result.ChosenItems.Count != projectSummaries.Count;
