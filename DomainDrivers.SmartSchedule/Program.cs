@@ -30,6 +30,7 @@ var dataSource = new NpgsqlDataSourceBuilder(postgresConnectionString)
     .Build();
 builder.Services.AddDbContext<SmartScheduleDbContext>(options => { options.UseNpgsql(dataSource); });
 builder.Services.AddScoped<IDbConnection>(sp => sp.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection());
+
 builder.Services.AddShared();
 
 // planning
@@ -91,13 +92,27 @@ builder.Services.AddQuartz(q =>
         .WithIdentity("PublishMissingDemandsJob-trigger")
         .WithCronSchedule("0 0 * ? * *"));
 });
-IServiceCollection temp = builder.Services;
+// end allocation
 
+// cashflow
+builder.Services.AddScoped<ICashflowRepository>(
+    x => new CashflowRepository(x.GetRequiredService<SmartScheduleDbContext>()));
+builder.Services.AddTransient<CashFlowFacade>(x =>
+    new CashFlowFacade(
+        x.GetRequiredService<ICashflowRepository>(), 
+        x.GetRequiredService<IEventsPublisher>(),
+        x.GetRequiredService<TimeProvider>(), 
+        x.GetRequiredService<IUnitOfWork>()));
 
-builder.Services.AddCashFlow();
+// employee
 builder.Services.AddEmployee();
+
+// device
 builder.Services.AddDevice();
+
+// resource
 builder.Services.AddResource();
+
 builder.Services.AddCapabilityPlanning();
 builder.Services.AddOptimization();
 builder.Services.AddSimulation();
