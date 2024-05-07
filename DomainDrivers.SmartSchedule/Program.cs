@@ -94,7 +94,7 @@ public class Program
                     x.GetRequiredService<IProjectAllocationsRepository>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(), 
-                    x.GetRequiredService<ICapabilityFinder>());
+                    x.GetRequiredService<AllocatableCapabilityRepository>());
             });
         builder.Services.AddTransient<PotentialTransfersService>(x => new PotentialTransfersService(
             x.GetRequiredService<SimulationFacade>(),
@@ -130,34 +130,55 @@ public class Program
             x => new EmployeeRepository(x.GetRequiredService<SmartScheduleDbContext>()));
         builder.Services.AddTransient<EmployeeFacade>(
             x => x.GetRequiredService<Root>()
-                .CreateEmployeeFacade(x.GetRequiredService<EmployeeRepository>(),
-                    x.GetRequiredService<CapabilityScheduler>(),
-                    x.GetRequiredService<IUnitOfWork>()));
+                .CreateEmployeeFacade(
+                    x.GetRequiredService<EmployeeRepository>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<AllocatableCapabilityRepository>()));
 
         // device
         builder.Services.AddScoped<IDeviceDbContext>(
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddTransient<DeviceRepository>();
         builder.Services.AddTransient<DeviceFacade>(x =>
-            x.GetRequiredService<Root>().CreateDeviceFacade(
-                x.GetRequiredService<DeviceRepository>(),
-                x.GetRequiredService<CapabilityScheduler>(), 
-                x.GetRequiredService<IUnitOfWork>()));
+            x.GetRequiredService<Root>()
+                .CreateDeviceFacade(
+                    x.GetRequiredService<DeviceRepository>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<AllocatableCapabilityRepository>()));
 
 // resource
         builder.Services.AddTransient<ResourceFacade>(
             x => x.GetRequiredService<Root>()
             .CreateResourceFacade(
                 x.GetRequiredService<EmployeeRepository>(),
-                x.GetRequiredService<CapabilityScheduler>(),
                 x.GetRequiredService<IUnitOfWork>(),
-                x.GetRequiredService<DeviceRepository>()));
+                x.GetRequiredService<DeviceRepository>(), 
+                x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                x.GetRequiredService<SmartScheduleDbContext>(), 
+                x.GetRequiredService<IEventsPublisher>(), 
+                x.GetRequiredService<TimeProvider>(), 
+                x.GetRequiredService<AllocatableCapabilityRepository>()));
 
         //capability planning
         builder.Services.AddScoped<ICapabilitySchedulingDbContext>(
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddTransient<AllocatableCapabilityRepository>();
-        builder.Services.AddTransient<ICapabilityFinder, CapabilityFinder>(x => x.GetRequiredService<Root>().CreateCapabilityFinder(x.GetRequiredService<ResourceAvailabilityRepository>(), x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>(), x.GetRequiredService<TimeProvider>(), x.GetRequiredService<IUnitOfWork>(), x.GetRequiredService<AllocatableCapabilityRepository>()));
+        builder.Services.AddTransient<ICapabilityFinder, CapabilityFinder>(
+            x => x.GetRequiredService<Root>()
+            .CreateCapabilityFinder(x.GetRequiredService<ResourceAvailabilityRepository>(),
+                x.GetRequiredService<SmartScheduleDbContext>(),
+                x.GetRequiredService<IEventsPublisher>(),
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<IUnitOfWork>(),
+                x.GetRequiredService<AllocatableCapabilityRepository>()));
         builder.Services.AddTransient<CapabilityScheduler>(x => 
             x.GetRequiredService<Root>().CreateCapabilityScheduler(
                 x.GetRequiredService<ResourceAvailabilityRepository>(),
@@ -246,14 +267,13 @@ public class Root
             unitOfWork);
     }
 
-    public AllocationFacade CreateAllocationFacade(
-        IEventsPublisher eventsPublisher,
+    public AllocationFacade CreateAllocationFacade(IEventsPublisher eventsPublisher,
         TimeProvider timeProvider,
         IUnitOfWork unitOfWork,
         IProjectAllocationsRepository projectAllocationsRepository,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
-        SmartScheduleDbContext smartScheduleDbContext,
-        ICapabilityFinder capabilityFinder)
+        SmartScheduleDbContext smartScheduleDbContext, 
+        AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new AllocationFacade(
             projectAllocationsRepository,
@@ -263,7 +283,12 @@ public class Root
                 eventsPublisher,
                 timeProvider,
                 unitOfWork),
-            capabilityFinder,
+            CreateCapabilityFinder(resourceAvailabilityRepository, 
+                    smartScheduleDbContext, 
+                    eventsPublisher, 
+                    timeProvider, 
+                    unitOfWork, 
+                    allocatableCapabilityRepository),
             eventsPublisher,
             timeProvider,
             unitOfWork);
@@ -282,48 +307,78 @@ public class Root
             unitOfWork);
     }
 
-    public EmployeeFacade CreateEmployeeFacade(
-        EmployeeRepository employeeRepository,
-        CapabilityScheduler capabilityScheduler,
-        IUnitOfWork unitOfWork)
+    public EmployeeFacade CreateEmployeeFacade(EmployeeRepository employeeRepository,
+        IUnitOfWork unitOfWork,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher getRequiredService,
+        TimeProvider timeProvider,
+        AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new EmployeeFacade(
             employeeRepository,
             new ScheduleEmployeeCapabilities(
                 employeeRepository, 
-                capabilityScheduler),
+                CreateCapabilityScheduler(
+                    resourceAvailabilityRepository,
+                    smartScheduleDbContext,
+                    getRequiredService,
+                    timeProvider,
+                    unitOfWork, 
+                    allocatableCapabilityRepository)),
             unitOfWork
         );
     }
 
     public DeviceFacade CreateDeviceFacade(
         DeviceRepository deviceRepository,
-        CapabilityScheduler capabilityScheduler,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new DeviceFacade(
             deviceRepository,
             new ScheduleDeviceCapabilities(
                 deviceRepository,
-                capabilityScheduler),
+                CreateCapabilityScheduler(
+                    resourceAvailabilityRepository,
+                    smartScheduleDbContext,
+                    eventsPublisher,
+                    timeProvider,
+                    unitOfWork, 
+                    allocatableCapabilityRepository)),
             unitOfWork
         );
     }
 
-    public ResourceFacade CreateResourceFacade(
-        EmployeeRepository employeeRepository,
-        CapabilityScheduler capabilityScheduler,
+    public ResourceFacade CreateResourceFacade(EmployeeRepository employeeRepository,
         IUnitOfWork unitOfWork,
-        DeviceRepository deviceRepository)
+        DeviceRepository deviceRepository,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new ResourceFacade(
             CreateEmployeeFacade(employeeRepository,
-                    capabilityScheduler,
-                    unitOfWork),
+                unitOfWork,
+                resourceAvailabilityRepository, 
+                smartScheduleDbContext, 
+                eventsPublisher, 
+                timeProvider, 
+                allocatableCapabilityRepository),
             CreateDeviceFacade(
                 deviceRepository,
-                capabilityScheduler, 
-                unitOfWork));
+                unitOfWork,
+                resourceAvailabilityRepository, 
+                smartScheduleDbContext, 
+                eventsPublisher, 
+                timeProvider, 
+                allocatableCapabilityRepository));
     }
 
     public CapabilityScheduler CreateCapabilityScheduler(ResourceAvailabilityRepository resourceAvailabilityRepository, SmartScheduleDbContext smartScheduleDbContext, IEventsPublisher getRequiredService, TimeProvider requiredService, IUnitOfWork unitOfWork, AllocatableCapabilityRepository allocatableCapabilityRepository)
