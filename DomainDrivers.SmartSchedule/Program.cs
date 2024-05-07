@@ -57,16 +57,7 @@ public class Program
         builder.Services.AddScoped<IProjectRepository>(x => 
             x.GetRequiredService<Root>().CreateRedisProjectRepository());
         builder.Services.AddTransient<PlanningFacade>(x =>
-            x.GetRequiredService<Root>().CreatePlanningFacade(
-                x.GetRequiredService<IProjectRepository>(),
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                    x.GetRequiredService<SmartScheduleDbContext>(),
-                    x.GetRequiredService<IEventsPublisher>(), 
-                    x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>()),
-                x.GetRequiredService<IMediator>()));
+            x.GetRequiredService<Root>().CreatePlanningFacade(x.GetRequiredService<IProjectRepository>(), x.GetRequiredService<TimeProvider>(), x.GetRequiredService<ResourceAvailabilityRepository>(), x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>(), x.GetRequiredService<IUnitOfWork>(), x.GetRequiredService<IMediator>()));
 
 
 // availability
@@ -296,23 +287,12 @@ public class Root
         return new RedisProjectRepository(RedisConnectionMultiplexer);
     }
 
-    public PlanningFacade CreatePlanningFacade(IProjectRepository projectRepository, TimeProvider timeProvider,
-        IAvailabilityFacade availabilityFacade, IMediator mediator)
-    {
-        var eventsPublisher = CreateEventsPublisher(mediator);
-        return new PlanningFacade(
-            projectRepository, //must be in container
-            new StageParallelization(),
-            new PlanChosenResources(
-                projectRepository,
-                availabilityFacade,
-                eventsPublisher,
-                timeProvider),
-            eventsPublisher,
-            timeProvider);
-    }
-
-    public AvailabilityFacade CreateAvailabilityFacade(ResourceAvailabilityRepository resourceAvailabilityRepository, SmartScheduleDbContext smartScheduleDbContext, IEventsPublisher eventsPublisher, TimeProvider timeProvider, IUnitOfWork unitOfWork)
+    public AvailabilityFacade CreateAvailabilityFacade(
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork)
     {
         return new AvailabilityFacade(
             resourceAvailabilityRepository,
@@ -554,15 +534,12 @@ public class Root
         IRiskPushNotification riskPushNotification)
     {
         return new VerifyEnoughDemandsDuringPlanning(
-            CreatePlanningFacade(
-                projectRepository,
+            CreatePlanningFacade(projectRepository,
                 timeProvider,
-                CreateAvailabilityFacade(
-                    resourceAvailabilityRepository, 
-                    smartScheduleDbContext,
-                    eventsPublisher, 
-                    timeProvider,
-                    unitOfWork),
+                resourceAvailabilityRepository,
+                smartScheduleDbContext,
+                eventsPublisher,
+                unitOfWork,
                 mediator),
             CreateSimulationFacade(),
             CreateResourceFacade(
@@ -575,6 +552,32 @@ public class Root
                     timeProvider, 
                     allocatableCapabilityRepository),
             riskPushNotification);
+    }
+
+    public PlanningFacade CreatePlanningFacade(
+        IProjectRepository projectRepository,
+        TimeProvider timeProvider,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        IUnitOfWork unitOfWork,
+        IMediator mediator)
+    {
+        return new PlanningFacade(
+            projectRepository, //must be in container
+            new StageParallelization(),
+            new PlanChosenResources(
+                projectRepository,
+                CreateAvailabilityFacade(
+                    resourceAvailabilityRepository, 
+                    smartScheduleDbContext,
+                    eventsPublisher, 
+                    timeProvider,
+                    unitOfWork),
+                CreateEventsPublisher(mediator), //bug may not be able to use it here
+                timeProvider),
+            CreateEventsPublisher(mediator), //bug may not be able to use it here
+            timeProvider);
     }
 }
 
