@@ -21,17 +21,14 @@ public class Root
 {
     private readonly string _redisConnectionString;
     private readonly string _postgresConnectionString;
+    private readonly TimeProvider _timeProvider;
 
-    public Root(string redisConnectionString, string postgresConnectionString)
+    public Root(string redisConnectionString, string postgresConnectionString, TimeProvider timeProvider)
     {
         _redisConnectionString = redisConnectionString;
         _postgresConnectionString = postgresConnectionString;
+        _timeProvider = timeProvider;
         RedisConnectionMultiplexer = ConnectionMultiplexer.Connect(_redisConnectionString);
-    }
-
-    public TimeProvider CreateTimeProvider()
-    {
-        return TimeProvider.System;
     }
 
     public EventsPublisher CreateEventsPublisher(IMediator mediator)
@@ -54,19 +51,18 @@ public class Root
     public AvailabilityFacade CreateAvailabilityFacade(
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
-        IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider)
+        IEventsPublisher eventsPublisher)
     {
         return new AvailabilityFacade(
             resourceAvailabilityRepository,
             new ResourceAvailabilityReadModel(smartScheduleDbContext.Database.GetDbConnection()),
             eventsPublisher, //bug fails the tests if changed
-            timeProvider,
+            _timeProvider,
             CreateUnitOfWork(smartScheduleDbContext));
     }
 
-    public AllocationFacade CreateAllocationFacade(IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
+    public AllocationFacade CreateAllocationFacade(
+        IEventsPublisher eventsPublisher,
         IProjectAllocationsRepository projectAllocationsRepository,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext, 
@@ -77,28 +73,25 @@ public class Root
             CreateAvailabilityFacade(
                 resourceAvailabilityRepository,
                 smartScheduleDbContext,
-                eventsPublisher,
-                timeProvider),
+                eventsPublisher),
             CreateCapabilityFinder(resourceAvailabilityRepository, 
                 smartScheduleDbContext, 
                 eventsPublisher, 
-                timeProvider, 
                 allocatableCapabilityRepository),
             eventsPublisher,
-            timeProvider,
+            _timeProvider,
             CreateUnitOfWork(smartScheduleDbContext));
     }
 
     public CashFlowFacade CreateCashFlowFacade(
         ICashflowRepository cashflowRepository,
-        IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider, 
+        IEventsPublisher eventsPublisher, 
         SmartScheduleDbContext smartScheduleDbContext)
     {
         return new CashFlowFacade(
             cashflowRepository, 
             eventsPublisher,
-            timeProvider, 
+            _timeProvider, 
             CreateUnitOfWork(smartScheduleDbContext));
     }
 
@@ -106,7 +99,6 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new EmployeeFacade(
@@ -116,8 +108,7 @@ public class Root
                 CreateCapabilityScheduler(
                     resourceAvailabilityRepository,
                     smartScheduleDbContext,
-                    eventsPublisher,
-                    timeProvider, 
+                    eventsPublisher, 
                     allocatableCapabilityRepository)),
             CreateUnitOfWork(smartScheduleDbContext)
         );
@@ -128,7 +119,6 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new DeviceFacade(
@@ -138,8 +128,7 @@ public class Root
                 CreateCapabilityScheduler(
                     resourceAvailabilityRepository,
                     smartScheduleDbContext,
-                    eventsPublisher,
-                    timeProvider, 
+                    eventsPublisher, 
                     allocatableCapabilityRepository)),
             CreateUnitOfWork(smartScheduleDbContext)
         );
@@ -150,7 +139,6 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new ResourceFacade(
@@ -158,14 +146,12 @@ public class Root
                 resourceAvailabilityRepository, 
                 smartScheduleDbContext, 
                 eventsPublisher, 
-                timeProvider, 
                 allocatableCapabilityRepository),
             CreateDeviceFacade(
                 deviceRepository,
                 resourceAvailabilityRepository, 
                 smartScheduleDbContext, 
                 eventsPublisher, 
-                timeProvider, 
                 allocatableCapabilityRepository));
     }
 
@@ -173,15 +159,13 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher getRequiredService,
-        TimeProvider requiredService,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new CapabilityScheduler(
             CreateAvailabilityFacade(
                 resourceAvailabilityRepository, 
                 smartScheduleDbContext,
-                getRequiredService, 
-                requiredService),
+                getRequiredService),
             allocatableCapabilityRepository,
             CreateUnitOfWork(smartScheduleDbContext));
     }
@@ -190,15 +174,13 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher getRequiredService,
-        TimeProvider requiredService,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
         return new CapabilityFinder(
             CreateAvailabilityFacade(
                 resourceAvailabilityRepository, 
                 smartScheduleDbContext,
-                getRequiredService, 
-                requiredService),
+                getRequiredService),
             allocatableCapabilityRepository);
     }
 
@@ -216,7 +198,6 @@ public class Root
         RiskPeriodicCheckSagaRepository riskPeriodicCheckSagaRepository,
         ICashflowRepository cashflowRepository,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         IAllocationDbContext allocationDbContext,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
@@ -224,28 +205,25 @@ public class Root
         IRiskPushNotification riskPushNotification)
     {
         return new RiskPeriodicCheckSagaDispatcher(
-            riskPeriodicCheckSagaRepository, 
+            riskPeriodicCheckSagaRepository,
             CreatePotentialTransfersService(
-                cashflowRepository, 
-                eventsPublisher, 
-                timeProvider, 
-                allocationDbContext, 
-                smartScheduleDbContext), 
+                cashflowRepository,
+                eventsPublisher,
+                allocationDbContext,
+                smartScheduleDbContext),
             CreateCapabilityFinder(
                 resourceAvailabilityRepository,
                 smartScheduleDbContext,
                 eventsPublisher,
-                timeProvider,
-                allocatableCapabilityRepository), 
-            riskPushNotification, 
-            timeProvider, 
+                allocatableCapabilityRepository),
+            riskPushNotification,
+            _timeProvider,
             CreateUnitOfWork(smartScheduleDbContext));
     }
 
     public PotentialTransfersService CreatePotentialTransfersService(
         ICashflowRepository cashflowRepository,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         IAllocationDbContext allocationDbContext,
         SmartScheduleDbContext smartScheduleDbContext)
     {
@@ -253,8 +231,7 @@ public class Root
             CreateSimulationFacade(),
             CreateCashFlowFacade(
                 cashflowRepository,
-                eventsPublisher,
-                timeProvider, 
+                eventsPublisher, 
                 smartScheduleDbContext),
             allocationDbContext);
     }
@@ -263,22 +240,19 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         IRiskPushNotification riskPushNotification)
     {
         return new VerifyNeededResourcesAvailableInTimeSlot(
             CreateAvailabilityFacade(
                 resourceAvailabilityRepository, 
                 smartScheduleDbContext,
-                eventsPublisher, 
-                timeProvider),
+                eventsPublisher),
             riskPushNotification
         );
     }
 
     public VerifyEnoughDemandsDuringPlanning CreateVerifyEnoughDemandsDuringPlanning(
         IProjectRepository projectRepository,
-        TimeProvider timeProvider,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
@@ -289,7 +263,6 @@ public class Root
     {
         return new VerifyEnoughDemandsDuringPlanning(
                 CreatePlanningFacade(projectRepository,
-                    timeProvider,
                     resourceAvailabilityRepository,
                     smartScheduleDbContext,
                     eventsPublisher),
@@ -300,14 +273,12 @@ public class Root
                     resourceAvailabilityRepository, 
                     smartScheduleDbContext, 
                     eventsPublisher, 
-                    timeProvider, 
                     allocatableCapabilityRepository),
                 riskPushNotification);
     }
 
     public PlanningFacade CreatePlanningFacade(
         IProjectRepository projectRepository,
-        TimeProvider timeProvider,
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher)
@@ -320,27 +291,24 @@ public class Root
                 CreateAvailabilityFacade(
                     resourceAvailabilityRepository, 
                     smartScheduleDbContext,
-                    eventsPublisher, 
-                    timeProvider),
+                    eventsPublisher),
                 eventsPublisher,
-                timeProvider),
+                _timeProvider),
             eventsPublisher,
-            timeProvider);
+            _timeProvider);
     }
 
     public VerifyCriticalResourceAvailableDuringPlanning CreateVerifyCriticalResourceAvailableDuringPlanning(
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        TimeProvider timeProvider,
         IRiskPushNotification riskPushNotification)
     {
         return new VerifyCriticalResourceAvailableDuringPlanning(
             CreateAvailabilityFacade(
                 resourceAvailabilityRepository,
                 smartScheduleDbContext,
-                eventsPublisher,
-                timeProvider),
+                eventsPublisher),
             riskPushNotification);
     }
 }

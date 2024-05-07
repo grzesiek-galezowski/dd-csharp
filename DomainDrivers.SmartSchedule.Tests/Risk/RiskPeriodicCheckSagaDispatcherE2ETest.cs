@@ -25,8 +25,8 @@ public class RiskPeriodicCheckSagaDispatcherE2ETestApp : IntegrationTestAppBase
         {
             services
                 .Replace(ServiceDescriptor.Scoped<IRiskPushNotification>(_ => Substitute.For<IRiskPushNotification>()))
-                .Replace(ServiceDescriptor.Scoped<TimeProvider>(_ => Substitute.For<TimeProvider>()))
-                .Replace(ServiceDescriptor.Singleton<IProjectRepository, InMemoryProjectRepository>());;
+                .Replace(ServiceDescriptor.Singleton<TimeProvider>(_ => Substitute.For<TimeProvider>()))
+                .Replace(ServiceDescriptor.Singleton<IProjectRepository, InMemoryProjectRepository>());
         });
         base.ConfigureWebHost(builder);
     }
