@@ -49,7 +49,8 @@ public class Program
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SharedConfiguration).Assembly));
         builder.Services.AddScoped<IEventsPublisher, EventsPublisher>(
             x => x.GetRequiredService<Root>().CreateEventsPublisher(x.GetRequiredService<IMediator>()));
-        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(x => 
+        //unit of work can be moved inside the root later:
+        builder.Services.AddTransient<IUnitOfWork, UnitOfWork>(x => 
             x.GetRequiredService<Root>().CreateUnitOfWork(x.GetRequiredService<SmartScheduleDbContext>()));
 
 // planning
@@ -84,18 +85,17 @@ public class Program
         builder.Services.AddScoped<IProjectAllocationsRepository, ProjectAllocationsRepository>(
             x => new ProjectAllocationsRepository(x.GetRequiredService<IAllocationDbContext>()));
         builder.Services.AddTransient<AllocationFacade>(
-            x => new AllocationFacade(
-                x.GetRequiredService<IProjectAllocationsRepository>(),
-                x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                    x.GetRequiredService<SmartScheduleDbContext>(),
-                    x.GetRequiredService<IEventsPublisher>(), 
-                    x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>()),
-                x.GetRequiredService<ICapabilityFinder>(),
-                x.GetRequiredService<IEventsPublisher>(),
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>()));
+            x =>
+            {
+                return x.GetRequiredService<Root>().CreateAllocationFacade(
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(), 
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<IProjectAllocationsRepository>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(), 
+                    x.GetRequiredService<ICapabilityFinder>());
+            });
         builder.Services.AddTransient<PotentialTransfersService>(x => new PotentialTransfersService(
             x.GetRequiredService<SimulationFacade>(),
             x.GetRequiredService<CashFlowFacade>(),
@@ -117,28 +117,29 @@ public class Program
         builder.Services.AddScoped<ICashflowRepository>(
             x => new CashflowRepository(x.GetRequiredService<SmartScheduleDbContext>()));
         builder.Services.AddTransient<CashFlowFacade>(x =>
-            new CashFlowFacade(
-                x.GetRequiredService<ICashflowRepository>(), 
-                x.GetRequiredService<IEventsPublisher>(),
-                x.GetRequiredService<TimeProvider>(), 
-                x.GetRequiredService<IUnitOfWork>()));
+            x.GetRequiredService<Root>()
+                .CreateCashFlowFacade(
+                    x.GetRequiredService<ICashflowRepository>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>()));
 
 // employee
-        builder.Services.AddScoped<IEmployeeDbContext>(
-            sp => sp.GetRequiredService<SmartScheduleDbContext>());
+        builder.Services.AddScoped<IEmployeeDbContext>(sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddTransient<EmployeeRepository>(
             x => new EmployeeRepository(x.GetRequiredService<SmartScheduleDbContext>()));
         builder.Services.AddTransient<EmployeeFacade>(
-            x => new EmployeeFacade(
-                x.GetRequiredService<EmployeeRepository>(),
-                new ScheduleEmployeeCapabilities(
-                    x.GetRequiredService<EmployeeRepository>(), 
-                    x.GetRequiredService<CapabilityScheduler>()),
-                x.GetRequiredService<IUnitOfWork>()
-            ));
+            x => x.GetRequiredService<Root>()
+                .CreateEmployeeFacade(x.GetRequiredService<EmployeeRepository>(),
+                    x.GetRequiredService<CapabilityScheduler>(),
+                    x.GetRequiredService<IUnitOfWork>()));
 
-// device
-        builder.Services.AddDevice();
+        // device
+        builder.Services.AddScoped<IDeviceDbContext>(
+            sp => sp.GetRequiredService<SmartScheduleDbContext>());
+        builder.Services.AddTransient<DeviceRepository>();
+        builder.Services.AddTransient<DeviceFacade>();
+        builder.Services.AddTransient<ScheduleDeviceCapabilities>();
 
 // resource
         builder.Services.AddResource();
@@ -214,6 +215,56 @@ public class Root
             eventsPublisher, //bug fails the tests if changed
             timeProvider,
             unitOfWork);
+    }
+
+    public AllocationFacade CreateAllocationFacade(
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork,
+        IProjectAllocationsRepository projectAllocationsRepository,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        ICapabilityFinder capabilityFinder)
+    {
+        return new AllocationFacade(
+            projectAllocationsRepository,
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository,
+                smartScheduleDbContext,
+                eventsPublisher,
+                timeProvider,
+                unitOfWork),
+            capabilityFinder,
+            eventsPublisher,
+            timeProvider,
+            unitOfWork);
+    }
+
+    public CashFlowFacade CreateCashFlowFacade(
+        ICashflowRepository cashflowRepository,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork)
+    {
+        return new CashFlowFacade(
+            cashflowRepository, 
+            eventsPublisher,
+            timeProvider, 
+            unitOfWork);
+    }
+
+    public EmployeeFacade CreateEmployeeFacade(
+        EmployeeRepository employeeRepository,
+        CapabilityScheduler capabilityScheduler,
+        IUnitOfWork unitOfWork)
+    {
+        return new EmployeeFacade(
+            employeeRepository,
+            new ScheduleEmployeeCapabilities(
+                employeeRepository, 
+                capabilityScheduler),
+            unitOfWork
+        );
     }
 }
 
