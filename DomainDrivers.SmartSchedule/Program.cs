@@ -39,7 +39,7 @@ public class Program
             .EnableDynamicJson()
             .Build();
         builder.Services.AddDbContext<SmartScheduleDbContext>(options => { options.UseNpgsql(dataSource); });
-        builder.Services.AddScoped<IDbConnection>(sp => sp.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection());
+        builder.Services.AddScoped<IDbConnection>(x => x.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection());
 
 //shared
         builder.Services.AddSingleton<Root>(x => 
@@ -68,14 +68,15 @@ public class Program
 
 
 // availability
-        builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>(x => new AvailabilityFacade(
-            x.GetRequiredService<ResourceAvailabilityRepository>(),
-            new ResourceAvailabilityReadModel(x.GetRequiredService<IDbConnection>()), //x.GetRequiredService<ResourceAvailabilityReadModel>()
-            x.GetRequiredService<IEventsPublisher>(),
-            x.GetRequiredService<TimeProvider>(),
-            x.GetRequiredService<IUnitOfWork>()));
+        builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>(x =>
+            x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                x.GetRequiredService<SmartScheduleDbContext>(),
+                x.GetRequiredService<IEventsPublisher>(), 
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<IUnitOfWork>()));
         builder.Services.AddTransient<ResourceAvailabilityRepository>(x =>
-            new ResourceAvailabilityRepository(x.GetRequiredService<IDbConnection>()));
+            new ResourceAvailabilityRepository(x.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection()));
 
 // allocation
         builder.Services.AddScoped<IAllocationDbContext>(
@@ -198,6 +199,16 @@ public class Root
                 timeProvider),
             eventsPublisher,
             timeProvider);
+    }
+
+    public AvailabilityFacade CreateAvailabilityFacade(ResourceAvailabilityRepository resourceAvailabilityRepository, SmartScheduleDbContext smartScheduleDbContext, IEventsPublisher eventsPublisher, TimeProvider timeProvider, IUnitOfWork unitOfWork)
+    {
+        return new AvailabilityFacade(
+            resourceAvailabilityRepository,
+            new ResourceAvailabilityReadModel(smartScheduleDbContext.Database.GetDbConnection()),
+            eventsPublisher, //bug fails the tests if changed
+            timeProvider,
+            unitOfWork);
     }
 }
 
