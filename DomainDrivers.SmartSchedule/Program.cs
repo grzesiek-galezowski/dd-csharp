@@ -192,7 +192,46 @@ public class Program
         builder.Services.AddTransient<SimulationFacade>(x => x.GetRequiredService<Root>().CreateSimulationFacade());
 
         //risk
-        builder.Services.AddRisk();
+        builder.Services.AddScoped<IRiskDbContext>(
+            sp => sp.GetRequiredService<SmartScheduleDbContext>());
+        builder.Services.AddScoped<RiskPeriodicCheckSagaRepository>();
+
+        builder.Services.AddTransient<RiskPeriodicCheckSagaDispatcher>(x =>
+            x.GetRequiredService<Root>()
+                .CreateRiskPeriodicCheckSagaDispatcher(x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
+                    x.GetRequiredService<ICashflowRepository>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<IAllocationDbContext>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<AllocatableCapabilityRepository>(),
+                    x.GetRequiredService<IRiskPushNotification>()));
+
+        builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x => new RiskPushNotification()); //do not replace this - needed by the tests
+        builder.Services.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>(x => new VerifyCriticalResourceAvailableDuringPlanning(
+            x.GetRequiredService<IAvailabilityFacade>(),
+            x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x => new VerifyEnoughDemandsDuringPlanning(
+            x.GetRequiredService<PlanningFacade>(),
+            x.GetRequiredService<SimulationFacade>(),
+            x.GetRequiredService<ResourceFacade>(),
+            x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>(x => new VerifyNeededResourcesAvailableInTimeSlot(
+            x.GetRequiredService<IAvailabilityFacade>(),
+            x.GetRequiredService<IRiskPushNotification>()
+            ));
+        builder.Services.AddQuartz(q =>
+        {
+            var jobKey1 = new JobKey("RiskPeriodicCheckSagaWeeklyCheckJob");
+            q.AddJob<RiskPeriodicCheckSagaWeeklyCheckJob>(opts => opts.WithIdentity(jobKey1));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey1)
+                .WithIdentity("RiskPeriodicCheckSagaWeeklyCheckJob-trigger")
+                .WithCronSchedule("0 0 12 ? * SUN"));
+        });
         
         //quartz
         builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
@@ -417,6 +456,40 @@ public class Root
     public SimulationFacade CreateSimulationFacade()
     {
         return new SimulationFacade(CreateOptimizationFacade());
+    }
+
+    public RiskPeriodicCheckSagaDispatcher CreateRiskPeriodicCheckSagaDispatcher(
+        RiskPeriodicCheckSagaRepository riskPeriodicCheckSagaRepository,
+        ICashflowRepository cashflowRepository,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork,
+        IAllocationDbContext allocationDbContext,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        AllocatableCapabilityRepository allocatableCapabilityRepository,
+        IRiskPushNotification riskPushNotification)
+    {
+        return new RiskPeriodicCheckSagaDispatcher(
+            riskPeriodicCheckSagaRepository,
+            new PotentialTransfersService(
+                CreateSimulationFacade(),
+                CreateCashFlowFacade(
+                    cashflowRepository,
+                    eventsPublisher,
+                    timeProvider,
+                    unitOfWork),
+                allocationDbContext),
+            CreateCapabilityFinder(
+                resourceAvailabilityRepository,
+                smartScheduleDbContext,
+                eventsPublisher,
+                timeProvider,
+                unitOfWork,
+                allocatableCapabilityRepository),
+            riskPushNotification,
+            timeProvider,
+            unitOfWork);
     }
 }
 
