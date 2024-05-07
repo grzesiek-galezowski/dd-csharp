@@ -57,15 +57,16 @@ public class Program
         builder.Services.AddScoped<IProjectRepository>(x => 
             x.GetRequiredService<Root>().CreateRedisProjectRepository());
         builder.Services.AddTransient<PlanningFacade>(x =>
-        {
-            var timeProvider = x.GetRequiredService<TimeProvider>();
-
-            return x.GetRequiredService<Root>().CreatePlanningFacade(
-                x.GetRequiredService<IProjectRepository>(), 
-                timeProvider, 
-                x.GetRequiredService<IAvailabilityFacade>(), 
-                x.GetRequiredService<IMediator>());
-        });
+            x.GetRequiredService<Root>().CreatePlanningFacade(
+                x.GetRequiredService<IProjectRepository>(),
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(), 
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>()),
+                x.GetRequiredService<IMediator>()));
 
 
 // availability
@@ -211,15 +212,43 @@ public class Program
 
         builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x => new RiskPushNotification()); //do not replace this - needed by the tests
         builder.Services.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>(x => new VerifyCriticalResourceAvailableDuringPlanning(
-            x.GetRequiredService<IAvailabilityFacade>(),
+            x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                x.GetRequiredService<SmartScheduleDbContext>(),
+                x.GetRequiredService<IEventsPublisher>(), 
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<IUnitOfWork>()),
             x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x => new VerifyEnoughDemandsDuringPlanning(
-            x.GetRequiredService<PlanningFacade>(),
-            x.GetRequiredService<SimulationFacade>(),
-            x.GetRequiredService<ResourceFacade>(),
+            x.GetRequiredService<Root>().CreatePlanningFacade(
+                x.GetRequiredService<IProjectRepository>(),
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(), 
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>()),
+                x.GetRequiredService<IMediator>()),
+            x.GetRequiredService<Root>().CreateSimulationFacade(),
+            x.GetRequiredService<Root>()
+                .CreateResourceFacade(
+                    x.GetRequiredService<EmployeeRepository>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<DeviceRepository>(), 
+                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                    x.GetRequiredService<SmartScheduleDbContext>(), 
+                    x.GetRequiredService<IEventsPublisher>(), 
+                    x.GetRequiredService<TimeProvider>(), 
+                    x.GetRequiredService<AllocatableCapabilityRepository>()),
             x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>(x => new VerifyNeededResourcesAvailableInTimeSlot(
-            x.GetRequiredService<IAvailabilityFacade>(),
+            x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                x.GetRequiredService<SmartScheduleDbContext>(),
+                x.GetRequiredService<IEventsPublisher>(), 
+                x.GetRequiredService<TimeProvider>(),
+                x.GetRequiredService<IUnitOfWork>()),
             x.GetRequiredService<IRiskPushNotification>()
             ));
         builder.Services.AddQuartz(q =>
