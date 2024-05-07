@@ -3,7 +3,6 @@ using DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 using DomainDrivers.SmartSchedule.Allocation.Cashflow;
 using DomainDrivers.SmartSchedule.Availability;
 using DomainDrivers.SmartSchedule.Shared;
-using MediatR;
 
 namespace DomainDrivers.SmartSchedule.Risk;
 
@@ -14,11 +13,7 @@ public class RiskPeriodicCheckSagaDispatcher(
     IRiskPushNotification riskPushNotification,
     TimeProvider clock,
     IUnitOfWork unitOfWork)
-    :
-        INotificationHandler<EarningsRecalculated>, INotificationHandler<ProjectAllocationScheduled>,
-        INotificationHandler<ResourceTakenOver>, INotificationHandler<NotSatisfiedDemands>
 {
-    //remember about transactions spanning saga and potential external system
     public async Task Handle(ProjectAllocationScheduled @event, CancellationToken cancellationToken)
     {
         var (found, nextStep) = await unitOfWork.InTransaction(async () =>
@@ -29,8 +24,7 @@ public class RiskPeriodicCheckSagaDispatcher(
         });
         await Perform(nextStep, found);
     }
-    
-    //remember about transactions spanning saga and potential external system
+
     public async Task Handle(NotSatisfiedDemands @event, CancellationToken cancellationToken)
     {
         var nextSteps = await unitOfWork.InTransaction(async () =>
@@ -54,8 +48,7 @@ public class RiskPeriodicCheckSagaDispatcher(
             await Perform(nextStep, saga);
         }
     }
-    
-    //remember about transactions spanning saga and potential external system
+
     public async Task Handle(EarningsRecalculated @event, CancellationToken cancellationToken)
     {
         var (found, nextStep) = await unitOfWork.InTransaction(async () =>
@@ -73,8 +66,7 @@ public class RiskPeriodicCheckSagaDispatcher(
         });
         await Perform(nextStep, found);
     }
-    
-    //remember about transactions spanning saga and potential external system
+
     public async Task Handle(ResourceTakenOver @event, CancellationToken cancellationToken)
     {
         var interested = @event.PreviousOwners
@@ -109,7 +101,7 @@ public class RiskPeriodicCheckSagaDispatcher(
             var nextStep = await unitOfWork.InTransaction(() =>
             {
                 var nextStep = saga.HandleWeeklyCheck(clock.GetUtcNow().DateTime);
-                return Task.FromResult(nextStep);
+                return Task.FromResult<RiskPeriodicCheckSagaStep>(nextStep);
             });
             await Perform(nextStep, saga);
         }
@@ -142,7 +134,7 @@ public class RiskPeriodicCheckSagaDispatcher(
     {
         var replacements = await FindAvailableReplacementsFor(saga.MissingDemands);
 
-        if (replacements.Values.SelectMany(x => x.All).Any())
+        if (Enumerable.SelectMany<AllocatableCapabilitiesSummary, AllocatableCapabilitySummary>(replacements.Values, x => x.All).Any())
         {
             riskPushNotification.NotifyAboutAvailability(saga.ProjectId, replacements);
         }

@@ -12,7 +12,7 @@ public static class RiskConfiguration
     {
         serviceCollection.AddScoped<IRiskDbContext>(
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
-        serviceCollection.AddTransient<RiskPeriodicCheckSagaDispatcher>();
+        serviceCollection.AddTransient<MediatrRiskPeriodicCheckSagaDispatcher>();
         serviceCollection.AddScoped<RiskPeriodicCheckSagaRepository>();
         serviceCollection.AddTransient<IRiskPushNotification, RiskPushNotification>();
         serviceCollection.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>();

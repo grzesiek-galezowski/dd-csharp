@@ -234,22 +234,22 @@ public class Root
         IRiskPushNotification riskPushNotification)
     {
         return new RiskPeriodicCheckSagaDispatcher(
-            riskPeriodicCheckSagaRepository,
+            riskPeriodicCheckSagaRepository, 
             CreatePotentialTransfersService(
                 cashflowRepository, 
                 eventsPublisher, 
                 timeProvider, 
                 unitOfWork, 
-                allocationDbContext),
+                allocationDbContext), 
             CreateCapabilityFinder(
                 resourceAvailabilityRepository,
                 smartScheduleDbContext,
                 eventsPublisher,
                 timeProvider,
                 unitOfWork,
-                allocatableCapabilityRepository),
-            riskPushNotification,
-            timeProvider,
+                allocatableCapabilityRepository), 
+            riskPushNotification, 
+            timeProvider, 
             unitOfWork);
     }
 

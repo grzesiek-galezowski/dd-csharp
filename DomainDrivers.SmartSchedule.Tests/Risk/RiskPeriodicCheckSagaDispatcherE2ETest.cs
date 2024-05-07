@@ -38,7 +38,7 @@ public class RiskPeriodicCheckSagaDispatcherE2ETest : IntegrationTest, IClassFix
     private static readonly TimeSlot ProjectDates = new TimeSlot(DateTime.UtcNow, DateTime.UtcNow.AddDays(20));
     private readonly EmployeeFacade _employeeFacade;
     private readonly AllocationFacade _allocationFacade;
-    private readonly RiskPeriodicCheckSagaDispatcher _riskSagaDispatcher;
+    private readonly MediatrRiskPeriodicCheckSagaDispatcher _riskSagaDispatcher;
     private readonly IRiskPushNotification _riskPushNotification;
     private readonly CashFlowFacade _cashFlowFacade;
     private readonly TimeProvider _clock;
@@ -47,7 +47,7 @@ public class RiskPeriodicCheckSagaDispatcherE2ETest : IntegrationTest, IClassFix
     {
         _employeeFacade = Scope.ServiceProvider.GetRequiredService<EmployeeFacade>();
         _allocationFacade = Scope.ServiceProvider.GetRequiredService<AllocationFacade>();
-        _riskSagaDispatcher = Scope.ServiceProvider.GetRequiredService<RiskPeriodicCheckSagaDispatcher>();
+        _riskSagaDispatcher = Scope.ServiceProvider.GetRequiredService<MediatrRiskPeriodicCheckSagaDispatcher>();
         _riskPushNotification = Scope.ServiceProvider.GetRequiredService<IRiskPushNotification>();
         _cashFlowFacade = Scope.ServiceProvider.GetRequiredService<CashFlowFacade>();
         _clock = Scope.ServiceProvider.GetRequiredService<TimeProvider>();

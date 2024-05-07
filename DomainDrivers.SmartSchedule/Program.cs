@@ -50,7 +50,7 @@ public class Program
             new Root(redisConnectionString!, postgresConnectionString!));
 //TimeProvider and EventsPublisher must be in container
         builder.Services.AddSingleton<TimeProvider>(x => x.GetRequiredService<Root>().CreateTimeProvider());
-        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SharedConfiguration).Assembly));
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         builder.Services.AddScoped<IEventsPublisher, EventsPublisher>(
             x => x.GetRequiredService<Root>().CreateEventsPublisher(x.GetRequiredService<IMediator>()));
         //unit of work can be moved inside the root later:
@@ -196,18 +196,19 @@ public class Program
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddScoped<RiskPeriodicCheckSagaRepository>();
 
-        builder.Services.AddTransient<RiskPeriodicCheckSagaDispatcher>(x =>
-            x.GetRequiredService<Root>()
-                .CreateRiskPeriodicCheckSagaDispatcher(x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
-                    x.GetRequiredService<ICashflowRepository>(),
-                    x.GetRequiredService<IEventsPublisher>(),
-                    x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>(),
-                    x.GetRequiredService<IAllocationDbContext>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
-                    x.GetRequiredService<SmartScheduleDbContext>(),
-                    x.GetRequiredService<AllocatableCapabilityRepository>(),
-                    x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<RiskPeriodicCheckSagaDispatcher>(x => 
+            x.GetRequiredService<Root>().CreateRiskPeriodicCheckSagaDispatcher(
+            x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
+            x.GetRequiredService<ICashflowRepository>(),
+            x.GetRequiredService<IEventsPublisher>(),
+            x.GetRequiredService<TimeProvider>(),
+            x.GetRequiredService<IUnitOfWork>(),
+            x.GetRequiredService<IAllocationDbContext>(),
+            x.GetRequiredService<ResourceAvailabilityRepository>(),
+            x.GetRequiredService<SmartScheduleDbContext>(),
+            x.GetRequiredService<AllocatableCapabilityRepository>(),
+            x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<MediatrRiskPeriodicCheckSagaDispatcher>();
 
         builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x =>
             new RiskPushNotification()); //do not replace this - needed by the tests
