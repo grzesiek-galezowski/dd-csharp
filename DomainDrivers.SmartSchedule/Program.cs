@@ -5,17 +5,14 @@ using DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 using DomainDrivers.SmartSchedule.Allocation.Cashflow;
 using DomainDrivers.SmartSchedule.Availability;
 using DomainDrivers.SmartSchedule.Planning;
-using DomainDrivers.SmartSchedule.Resource;
 using DomainDrivers.SmartSchedule.Resource.Device;
 using DomainDrivers.SmartSchedule.Resource.Employee;
 using DomainDrivers.SmartSchedule.Risk;
 using DomainDrivers.SmartSchedule.Shared;
-using DomainDrivers.SmartSchedule.Simulation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Quartz;
-using StackExchange.Redis;
 
 namespace DomainDrivers.SmartSchedule;
 
@@ -27,8 +24,6 @@ public class Program
         builder.Configuration.AddTestConfiguration();
         var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
         var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-        builder.Services.AddSingleton<IConnectionMultiplexer>(x =>
-            x.GetRequiredService<Root>().RedisConnectionMultiplexer);
 
         ArgumentNullException.ThrowIfNull(postgresConnectionString);
         ArgumentNullException.ThrowIfNull(redisConnectionString);
@@ -47,22 +42,25 @@ public class Program
 
         //shared
         builder.Services.AddSingleton<Root>(x =>
-            new Root(redisConnectionString, postgresConnectionString, x.GetRequiredService<TimeProvider>()));
+            new Root(redisConnectionString,
+                postgresConnectionString,
+                x.GetRequiredService<TimeProvider>()));
         //TimeProvider and EventsPublisher must be in container
         builder.Services.AddSingleton<TimeProvider>(_ => TimeProvider.System);
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         builder.Services.AddScoped<IEventsPublisher, EventsPublisher>(
             x => x.GetRequiredService<Root>().CreateEventsPublisher(x.GetRequiredService<IMediator>()));
-        //unit of work can be moved inside the root later:
-        builder.Services.AddTransient<IUnitOfWork, UnitOfWork>(x =>
-            x.GetRequiredService<Root>().CreateUnitOfWork(x.GetRequiredService<SmartScheduleDbContext>()));
 
-// planning
+        // planning
         builder.Services.AddScoped<IProjectRepository>(x =>
             x.GetRequiredService<Root>().CreateRedisProjectRepository());
         builder.Services.AddTransient<PlanningFacade>(x =>
-            x.GetRequiredService<Root>().CreatePlanningFacade(x.GetRequiredService<IProjectRepository>(), x.GetRequiredService<ResourceAvailabilityRepository>(),
-                x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>()));
+            x.GetRequiredService<Root>()
+                .CreatePlanningFacade(
+                    x.GetRequiredService<IProjectRepository>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>()));
 
 
         // availability

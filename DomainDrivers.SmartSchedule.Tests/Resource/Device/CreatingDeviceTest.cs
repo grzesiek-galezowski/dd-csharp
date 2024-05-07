@@ -1,5 +1,4 @@
 ﻿using DomainDrivers.SmartSchedule.Resource.Device;
-using DomainDrivers.SmartSchedule.Shared;
 using static DomainDrivers.SmartSchedule.Shared.Capability;
 
 namespace DomainDrivers.SmartSchedule.Tests.Resource.Device;
