@@ -86,20 +86,19 @@ public class Program
         builder.Services.AddScoped<IProjectAllocationsRepository, ProjectAllocationsRepository>(
             x => new ProjectAllocationsRepository(x.GetRequiredService<IAllocationDbContext>()));
         builder.Services.AddTransient<AllocationFacade>(
-            x =>
-            {
-                return x.GetRequiredService<Root>().CreateAllocationFacade(
-                    x.GetRequiredService<IEventsPublisher>(),
-                    x.GetRequiredService<TimeProvider>(), 
-                    x.GetRequiredService<IUnitOfWork>(),
-                    x.GetRequiredService<IProjectAllocationsRepository>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
-                    x.GetRequiredService<SmartScheduleDbContext>(), 
-                    x.GetRequiredService<AllocatableCapabilityRepository>());
-            });
-        builder.Services.AddTransient<PotentialTransfersService>(x => new PotentialTransfersService(
-            x.GetRequiredService<SimulationFacade>(),
-            x.GetRequiredService<CashFlowFacade>(),
+            x => x.GetRequiredService<Root>().CreateAllocationFacade(
+                x.GetRequiredService<IEventsPublisher>(),
+                x.GetRequiredService<TimeProvider>(), 
+                x.GetRequiredService<IUnitOfWork>(),
+                x.GetRequiredService<IProjectAllocationsRepository>(),
+                x.GetRequiredService<ResourceAvailabilityRepository>(),
+                x.GetRequiredService<SmartScheduleDbContext>(), 
+                x.GetRequiredService<AllocatableCapabilityRepository>()));
+        builder.Services.AddTransient<PotentialTransfersService>(x => x.GetRequiredService<Root>().CreatePotentialTransfersService(
+            x.GetRequiredService<ICashflowRepository>(),
+            x.GetRequiredService<IEventsPublisher>(),
+            x.GetRequiredService<TimeProvider>(),
+            x.GetRequiredService<IUnitOfWork>(),
             x.GetRequiredService<IAllocationDbContext>()));
 
         builder.Services.AddQuartz(q =>
@@ -219,38 +218,29 @@ public class Program
                 x.GetRequiredService<TimeProvider>(),
                 x.GetRequiredService<IUnitOfWork>()),
             x.GetRequiredService<IRiskPushNotification>()));
-        builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x => new VerifyEnoughDemandsDuringPlanning(
-            x.GetRequiredService<Root>().CreatePlanningFacade(
-                x.GetRequiredService<IProjectRepository>(),
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                    x.GetRequiredService<SmartScheduleDbContext>(),
-                    x.GetRequiredService<IEventsPublisher>(), 
-                    x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>()),
-                x.GetRequiredService<IMediator>()),
-            x.GetRequiredService<Root>().CreateSimulationFacade(),
+        builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x =>
             x.GetRequiredService<Root>()
-                .CreateResourceFacade(
-                    x.GetRequiredService<EmployeeRepository>(),
+                .CreateVerifyEnoughDemandsDuringPlanning(x.GetRequiredService<IProjectRepository>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<IUnitOfWork>(),
-                    x.GetRequiredService<DeviceRepository>(), 
-                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                    x.GetRequiredService<SmartScheduleDbContext>(), 
-                    x.GetRequiredService<IEventsPublisher>(), 
-                    x.GetRequiredService<TimeProvider>(), 
-                    x.GetRequiredService<AllocatableCapabilityRepository>()),
-            x.GetRequiredService<IRiskPushNotification>()));
-        builder.Services.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>(x => new VerifyNeededResourcesAvailableInTimeSlot(
-            x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                x.GetRequiredService<SmartScheduleDbContext>(),
-                x.GetRequiredService<IEventsPublisher>(), 
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>()),
-            x.GetRequiredService<IRiskPushNotification>()
-            ));
+                    x.GetRequiredService<IMediator>(),
+                    x.GetRequiredService<EmployeeRepository>(),
+                    x.GetRequiredService<DeviceRepository>(),
+                    x.GetRequiredService<AllocatableCapabilityRepository>(),
+                    x.GetRequiredService<IRiskPushNotification>()));
+        builder.Services.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>(x =>
+            x.GetRequiredService<Root>()
+                .CreateVerifyNeededResourcesAvailableInTimeSlot(
+                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(),
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>(),
+                    x.GetRequiredService<IRiskPushNotification>()));
+
         builder.Services.AddQuartz(q =>
         {
             var jobKey1 = new JobKey("RiskPeriodicCheckSagaWeeklyCheckJob");
@@ -501,13 +491,11 @@ public class Root
     {
         return new RiskPeriodicCheckSagaDispatcher(
             riskPeriodicCheckSagaRepository,
-            new PotentialTransfersService(
-                CreateSimulationFacade(),
-                CreateCashFlowFacade(
-                    cashflowRepository,
-                    eventsPublisher,
-                    timeProvider,
-                    unitOfWork),
+            CreatePotentialTransfersService(
+                cashflowRepository, 
+                eventsPublisher, 
+                timeProvider, 
+                unitOfWork, 
                 allocationDbContext),
             CreateCapabilityFinder(
                 resourceAvailabilityRepository,
@@ -519,6 +507,74 @@ public class Root
             riskPushNotification,
             timeProvider,
             unitOfWork);
+    }
+
+    public PotentialTransfersService CreatePotentialTransfersService(ICashflowRepository cashflowRepository, IEventsPublisher eventsPublisher, TimeProvider timeProvider, IUnitOfWork unitOfWork, IAllocationDbContext allocationDbContext)
+    {
+        return new PotentialTransfersService(
+            CreateSimulationFacade(),
+            CreateCashFlowFacade(
+                cashflowRepository,
+                eventsPublisher,
+                timeProvider,
+                unitOfWork),
+            allocationDbContext);
+    }
+
+    public VerifyNeededResourcesAvailableInTimeSlot CreateVerifyNeededResourcesAvailableInTimeSlot(
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        TimeProvider timeProvider,
+        IUnitOfWork unitOfWork,
+        IRiskPushNotification riskPushNotification)
+    {
+        return new VerifyNeededResourcesAvailableInTimeSlot(
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository, 
+                smartScheduleDbContext,
+                eventsPublisher, 
+                timeProvider,
+                unitOfWork),
+            riskPushNotification
+        );
+    }
+
+    public VerifyEnoughDemandsDuringPlanning CreateVerifyEnoughDemandsDuringPlanning(
+        IProjectRepository projectRepository,
+        TimeProvider timeProvider,
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher eventsPublisher,
+        IUnitOfWork unitOfWork,
+        IMediator mediator,
+        EmployeeRepository employeeRepository,
+        DeviceRepository deviceRepository,
+        AllocatableCapabilityRepository allocatableCapabilityRepository,
+        IRiskPushNotification riskPushNotification)
+    {
+        return new VerifyEnoughDemandsDuringPlanning(
+            CreatePlanningFacade(
+                projectRepository,
+                timeProvider,
+                CreateAvailabilityFacade(
+                    resourceAvailabilityRepository, 
+                    smartScheduleDbContext,
+                    eventsPublisher, 
+                    timeProvider,
+                    unitOfWork),
+                mediator),
+            CreateSimulationFacade(),
+            CreateResourceFacade(
+                    employeeRepository,
+                    unitOfWork,
+                    deviceRepository, 
+                    resourceAvailabilityRepository, 
+                    smartScheduleDbContext, 
+                    eventsPublisher, 
+                    timeProvider, 
+                    allocatableCapabilityRepository),
+            riskPushNotification);
     }
 }
 
