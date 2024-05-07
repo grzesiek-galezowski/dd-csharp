@@ -303,8 +303,7 @@ public class Root
                 resourceAvailabilityRepository,
                 smartScheduleDbContext,
                 eventsPublisher,
-                unitOfWork,
-                mediator),
+                unitOfWork),
             CreateSimulationFacade(),
             CreateResourceFacade(
                 employeeRepository,
@@ -324,8 +323,7 @@ public class Root
         ResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
-        IUnitOfWork unitOfWork,
-        IMediator mediator)
+        IUnitOfWork unitOfWork)
     {
         return new PlanningFacade(
             projectRepository, //must be in container
@@ -338,9 +336,9 @@ public class Root
                     eventsPublisher, 
                     timeProvider,
                     unitOfWork),
-                CreateEventsPublisher(mediator), //bug may not be able to use it here
+                eventsPublisher,
                 timeProvider),
-            CreateEventsPublisher(mediator), //bug may not be able to use it here
+            eventsPublisher,
             timeProvider);
     }
 }
