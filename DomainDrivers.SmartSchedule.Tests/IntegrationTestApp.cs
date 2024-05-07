@@ -32,10 +32,12 @@ public class IntegrationTestApp : IntegrationTestAppBase
 public class IntegrationTestAppBase : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgresFixture _postgres;
+    private readonly RedisFixture _redis;
 
     public IntegrationTestAppBase()
     {
         _postgres = new PostgresFixture();
+        _redis = new RedisFixture();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -44,9 +46,12 @@ public class IntegrationTestAppBase : WebApplicationFactory<Program>, IAsyncLife
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "ConnectionStrings:Postgres", _postgres.ConnectionString },
+                { "ConnectionStrings:Redis", _redis.ConnectionString },
             })
             .Build();
         builder.UseConfiguration(config);
+        TestConfiguration.Set(configurationBuilder => 
+            configurationBuilder.AddInMemoryCollection(config.AsEnumerable()));
         builder.ConfigureTestServices(services =>
         {
             // Hosted services are not needed in integration tests and Quartz's one caused problems
@@ -59,6 +64,7 @@ public class IntegrationTestAppBase : WebApplicationFactory<Program>, IAsyncLife
     public virtual async Task InitializeAsync()
     {
         await _postgres.InitializeAsync();
+        await _redis.InitializeAsync();
     }
 
     Task IAsyncLifetime.DisposeAsync()
@@ -70,6 +76,7 @@ public class IntegrationTestAppBase : WebApplicationFactory<Program>, IAsyncLife
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        await _redis.DisposeAsync();
     }
 }
 

@@ -2,6 +2,8 @@ using DomainDrivers.SmartSchedule.Allocation;
 using DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 using DomainDrivers.SmartSchedule.Availability;
 using DomainDrivers.SmartSchedule.Shared;
+using Microsoft.Extensions.Configuration;
+using NSubstitute.Core;
 
 namespace DomainDrivers.SmartSchedule.Tests.Allocation;
 
@@ -149,3 +151,4 @@ public class ResourceAllocatingTest : IntegrationTestWithSharedApp
         return !await AvailabilityWasBlocked(allocatableCapabilityId.ToAvailabilityResourceId(), oneDay, projectId);
     }
 }
+
