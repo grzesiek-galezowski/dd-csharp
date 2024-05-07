@@ -86,7 +86,12 @@ public class Program
         builder.Services.AddTransient<AllocationFacade>(
             x => new AllocationFacade(
                 x.GetRequiredService<IProjectAllocationsRepository>(),
-                x.GetRequiredService<IAvailabilityFacade>(),
+                x.GetRequiredService<Root>().CreateAvailabilityFacade(
+                    x.GetRequiredService<ResourceAvailabilityRepository>(), 
+                    x.GetRequiredService<SmartScheduleDbContext>(),
+                    x.GetRequiredService<IEventsPublisher>(), 
+                    x.GetRequiredService<TimeProvider>(),
+                    x.GetRequiredService<IUnitOfWork>()),
                 x.GetRequiredService<ICapabilityFinder>(),
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<TimeProvider>(),
