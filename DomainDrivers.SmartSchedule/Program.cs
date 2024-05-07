@@ -188,11 +188,8 @@ public class Program
                 x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<AllocatableCapabilityRepository>()));
 
-        //optimization
-        builder.Services.AddOptimization();
-
         //simulation
-        builder.Services.AddSimulation();
+        builder.Services.AddTransient<SimulationFacade>(x => x.GetRequiredService<Root>().CreateSimulationFacade());
 
         //risk
         builder.Services.AddRisk();
@@ -410,6 +407,16 @@ public class Root
                 requiredService,
                 unitOfWork),
             allocatableCapabilityRepository);
+    }
+
+    public OptimizationFacade CreateOptimizationFacade()
+    {
+        return new OptimizationFacade();
+    }
+
+    public SimulationFacade CreateSimulationFacade()
+    {
+        return new SimulationFacade(CreateOptimizationFacade());
     }
 }
 
