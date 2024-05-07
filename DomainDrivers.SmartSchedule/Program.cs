@@ -157,23 +157,15 @@ public class Program
         builder.Services.AddScoped<ICapabilitySchedulingDbContext>(
             sp => sp.GetRequiredService<SmartScheduleDbContext>());
         builder.Services.AddTransient<AllocatableCapabilityRepository>();
-        builder.Services.AddTransient<ICapabilityFinder, CapabilityFinder>(x => new CapabilityFinder(
-            x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                x.GetRequiredService<ResourceAvailabilityRepository>(), 
+        builder.Services.AddTransient<ICapabilityFinder, CapabilityFinder>(x => x.GetRequiredService<Root>().CreateCapabilityFinder(x.GetRequiredService<ResourceAvailabilityRepository>(), x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>(), x.GetRequiredService<TimeProvider>(), x.GetRequiredService<IUnitOfWork>(), x.GetRequiredService<AllocatableCapabilityRepository>()));
+        builder.Services.AddTransient<CapabilityScheduler>(x => 
+            x.GetRequiredService<Root>().CreateCapabilityScheduler(
+                x.GetRequiredService<ResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
-                x.GetRequiredService<IEventsPublisher>(), 
+                x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>()),
-            x.GetRequiredService<AllocatableCapabilityRepository>()));
-        builder.Services.AddTransient<CapabilityScheduler>(x => new CapabilityScheduler(
-            x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                x.GetRequiredService<ResourceAvailabilityRepository>(), 
-                x.GetRequiredService<SmartScheduleDbContext>(),
-                x.GetRequiredService<IEventsPublisher>(), 
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>()),
-            x.GetRequiredService<AllocatableCapabilityRepository>(),
-            x.GetRequiredService<IUnitOfWork>()));
+                x.GetRequiredService<IUnitOfWork>(),
+                x.GetRequiredService<AllocatableCapabilityRepository>()));
 
         //optimization
         builder.Services.AddOptimization();
@@ -332,6 +324,37 @@ public class Root
                 deviceRepository,
                 capabilityScheduler, 
                 unitOfWork));
+    }
+
+    public CapabilityScheduler CreateCapabilityScheduler(ResourceAvailabilityRepository resourceAvailabilityRepository, SmartScheduleDbContext smartScheduleDbContext, IEventsPublisher getRequiredService, TimeProvider requiredService, IUnitOfWork unitOfWork, AllocatableCapabilityRepository allocatableCapabilityRepository)
+    {
+        return new CapabilityScheduler(
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository, 
+                smartScheduleDbContext,
+                getRequiredService, 
+                requiredService,
+                unitOfWork),
+            allocatableCapabilityRepository,
+            unitOfWork);
+    }
+
+    public CapabilityFinder CreateCapabilityFinder(
+        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        SmartScheduleDbContext smartScheduleDbContext,
+        IEventsPublisher getRequiredService,
+        TimeProvider requiredService,
+        IUnitOfWork unitOfWork,
+        AllocatableCapabilityRepository allocatableCapabilityRepository)
+    {
+        return new CapabilityFinder(
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository, 
+                smartScheduleDbContext,
+                getRequiredService, 
+                requiredService,
+                unitOfWork),
+            allocatableCapabilityRepository);
     }
 }
 
