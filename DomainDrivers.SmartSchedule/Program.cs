@@ -63,8 +63,7 @@ public class Program
         builder.Services.AddTransient<PlanningFacade>(x =>
             x.GetRequiredService<Root>().CreatePlanningFacade(x.GetRequiredService<IProjectRepository>(),
                 x.GetRequiredService<TimeProvider>(), x.GetRequiredService<ResourceAvailabilityRepository>(),
-                x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>(),
-                x.GetRequiredService<Root>().CreateUnitOfWork(x.GetRequiredService<SmartScheduleDbContext>())));
+                x.GetRequiredService<SmartScheduleDbContext>(), x.GetRequiredService<IEventsPublisher>()));
 
 
 // availability
@@ -73,8 +72,7 @@ public class Program
                 x.GetRequiredService<ResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
                 x.GetRequiredService<IEventsPublisher>(),
-                x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>()));
+                x.GetRequiredService<TimeProvider>()));
         builder.Services.AddTransient<ResourceAvailabilityRepository>(x =>
             new ResourceAvailabilityRepository(
                 x.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection()));
@@ -88,7 +86,6 @@ public class Program
             x => x.GetRequiredService<Root>().CreateAllocationFacade(
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<IProjectAllocationsRepository>(),
                 x.GetRequiredService<ResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
@@ -98,8 +95,8 @@ public class Program
                 x.GetRequiredService<ICashflowRepository>(),
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>(),
-                x.GetRequiredService<IAllocationDbContext>()));
+                x.GetRequiredService<IAllocationDbContext>(),
+                x.GetRequiredService<SmartScheduleDbContext>()));
 
         builder.Services.AddQuartz(q =>
         {
@@ -121,8 +118,8 @@ public class Program
                 .CreateCashFlowFacade(
                     x.GetRequiredService<ICashflowRepository>(),
                     x.GetRequiredService<IEventsPublisher>(),
-                    x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>()));
+                    x.GetRequiredService<TimeProvider>(), 
+                    x.GetRequiredService<SmartScheduleDbContext>()));
 
 // employee
         builder.Services.AddScoped<IEmployeeDbContext>(sp => sp.GetRequiredService<SmartScheduleDbContext>());
@@ -132,7 +129,6 @@ public class Program
             x => x.GetRequiredService<Root>()
                 .CreateEmployeeFacade(
                     x.GetRequiredService<EmployeeRepository>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
@@ -147,7 +143,6 @@ public class Program
             x.GetRequiredService<Root>()
                 .CreateDeviceFacade(
                     x.GetRequiredService<DeviceRepository>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
@@ -159,7 +154,6 @@ public class Program
             x => x.GetRequiredService<Root>()
                 .CreateResourceFacade(
                     x.GetRequiredService<EmployeeRepository>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<DeviceRepository>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
@@ -177,7 +171,6 @@ public class Program
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>()));
         builder.Services.AddTransient<CapabilityScheduler>(x =>
             x.GetRequiredService<Root>().CreateCapabilityScheduler(
@@ -185,7 +178,6 @@ public class Program
                 x.GetRequiredService<SmartScheduleDbContext>(),
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<TimeProvider>(),
-                x.GetRequiredService<IUnitOfWork>(),
                 x.GetRequiredService<AllocatableCapabilityRepository>()));
 
         //simulation
@@ -203,7 +195,6 @@ public class Program
                     x.GetRequiredService<ICashflowRepository>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<IAllocationDbContext>(),
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
@@ -211,8 +202,7 @@ public class Program
                     x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<MediatrRiskPeriodicCheckSagaDispatcher>();
 
-        builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x =>
-            new RiskPushNotification()); //do not replace this - needed by the tests
+        builder.Services.AddTransient<IRiskPushNotification, RiskPushNotification>(x => new RiskPushNotification()); //do not replace this - needed by the tests
         builder.Services.AddTransient<MediatrVerifyCriticalResourceAvailableDuringPlanning>();
         builder.Services.AddTransient<MediatrVerifyEnoughDemandsDuringPlanning>();
 
@@ -223,7 +213,6 @@ public class Program
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<IRiskPushNotification>()));
         builder.Services.AddTransient<VerifyEnoughDemandsDuringPlanning>(x =>
             x.GetRequiredService<Root>()
@@ -233,7 +222,6 @@ public class Program
                     x.GetRequiredService<ResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<EmployeeRepository>(),
                     x.GetRequiredService<DeviceRepository>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>(),
@@ -245,7 +233,6 @@ public class Program
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<TimeProvider>(),
-                    x.GetRequiredService<IUnitOfWork>(),
                     x.GetRequiredService<IRiskPushNotification>()));
 
         builder.Services.AddQuartz(q =>
