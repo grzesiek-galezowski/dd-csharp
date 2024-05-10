@@ -24,7 +24,7 @@ public interface IAvailabilityFacade
 
 public class AvailabilityFacade(
     IResourceAvailabilityRepository availabilityRepository,
-    ResourceAvailabilityReadModel availabilityReadModel,
+    IResourceAvailabilityReadModel availabilityReadModel,
     IEventsPublisher eventsPublisher,
     TimeProvider timeProvider,
     IUnitOfWork unitOfWork)

@@ -2,7 +2,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DomainDrivers.SmartSchedule.Allocation.CapabilityScheduling;
 
-public class AllocatableCapabilityRepository(ICapabilitySchedulingDbContext capabilitySchedulingDbContext)
+public interface IAllocatableCapabilityRepository
+{
+    Task<IList<AllocatableCapability>> FindByCapabilityWithin(string name, string type, DateTime from,
+        DateTime to);
+
+    Task<AllocatableCapability?> FindByResourceIdAndCapabilityAndTimeSlot(Guid allocatableResourceId,
+        string name, string type, DateTime from, DateTime to);
+
+    Task<IList<AllocatableCapability>> FindByResourceIdAndTimeSlot(Guid allocatableResourceId,
+        DateTime from, DateTime to);
+
+    Task<IList<AllocatableCapability>> FindAllById(IList<AllocatableCapabilityId> allocatableCapabilityIds);
+    Task<AllocatableCapability?> FindById(AllocatableCapabilityId allocatableCapabilityId);
+    Task SaveAll(IList<AllocatableCapability> allocatableResources);
+    Task<bool> ExistsById(AllocatableCapabilityId id);
+}
+
+public class AllocatableCapabilityRepository(ICapabilitySchedulingDbContext capabilitySchedulingDbContext) : IAllocatableCapabilityRepository
 {
     public async Task<IList<AllocatableCapability>> FindByCapabilityWithin(string name, string type, DateTime from,
         DateTime to)

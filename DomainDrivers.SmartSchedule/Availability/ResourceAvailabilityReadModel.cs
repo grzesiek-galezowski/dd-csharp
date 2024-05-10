@@ -4,7 +4,13 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceAvailabilityReadModel(IDbConnection dbConnection)
+public interface IResourceAvailabilityReadModel
+{
+    Task<Calendar> Load(ResourceId resourceId, TimeSlot timeSlot);
+    Task<Calendars> LoadAll(ISet<ResourceId> resourceIds, TimeSlot timeSlot);
+}
+
+public class ResourceAvailabilityReadModel(IDbConnection dbConnection) : IResourceAvailabilityReadModel
 {
     private const string CalendarQuery =
         $"""

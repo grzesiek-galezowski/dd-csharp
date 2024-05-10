@@ -17,7 +17,7 @@ public interface ICapabilityFinder
 
 public class CapabilityFinder(
     IAvailabilityFacade availabilityFacade,
-    AllocatableCapabilityRepository allocatableResourceRepository)
+    IAllocatableCapabilityRepository allocatableResourceRepository)
     : ICapabilityFinder
 {
     public async Task<AllocatableCapabilitiesSummary> FindAvailableCapabilities(Capability capability,

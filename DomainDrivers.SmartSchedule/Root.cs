@@ -17,11 +17,52 @@ using StackExchange.Redis;
 
 namespace DomainDrivers.SmartSchedule;
 
+public class AppLogicRoot
+{
+    public TimeProvider _timeProvider;
+
+    public AppLogicRoot(TimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider;
+    }
+
+    public AvailabilityFacade CreateAvailabilityFacade(
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
+        IEventsPublisher eventsPublisher,
+        IResourceAvailabilityReadModel resourceAvailabilityReadModel,
+        IUnitOfWork unitOfWork)
+    {
+        return new AvailabilityFacade(
+            resourceAvailabilityRepository,
+            resourceAvailabilityReadModel,
+            eventsPublisher, //bug fails the tests if changed
+            _timeProvider,
+            unitOfWork);
+    }
+
+    public CapabilityFinder CreateCapabilityFinder(
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
+        IEventsPublisher getRequiredService,
+        IAllocatableCapabilityRepository allocatableCapabilityRepository,
+        IResourceAvailabilityReadModel resourceAvailabilityReadModel,
+        IUnitOfWork unitOfWork)
+    {
+        return new CapabilityFinder(
+            CreateAvailabilityFacade(
+                resourceAvailabilityRepository,
+                getRequiredService,
+                resourceAvailabilityReadModel,
+                unitOfWork),
+            allocatableCapabilityRepository);
+    }
+}
+
 public class Root
 {
     private readonly string _redisConnectionString;
     private readonly string _postgresConnectionString;
     private readonly TimeProvider _timeProvider;
+    private readonly AppLogicRoot _appLogicRoot;
 
     public Root(string redisConnectionString, string postgresConnectionString, TimeProvider timeProvider)
     {
@@ -29,6 +70,7 @@ public class Root
         _postgresConnectionString = postgresConnectionString;
         _timeProvider = timeProvider;
         RedisConnectionMultiplexer = ConnectionMultiplexer.Connect(_redisConnectionString);
+        _appLogicRoot = new AppLogicRoot(_timeProvider);
     }
 
     public EventsPublisher CreateEventsPublisher(IMediator mediator)
@@ -53,12 +95,16 @@ public class Root
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher)
     {
-        return new AvailabilityFacade(
+        return _appLogicRoot.CreateAvailabilityFacade(
             resourceAvailabilityRepository,
-            new ResourceAvailabilityReadModel(smartScheduleDbContext.Database.GetDbConnection()),
-            eventsPublisher, //bug fails the tests if changed
-            _timeProvider,
+            eventsPublisher,
+            CreateResourceAvailabilityReadModel(smartScheduleDbContext),
             CreateUnitOfWork(smartScheduleDbContext));
+    }
+
+    private static ResourceAvailabilityReadModel CreateResourceAvailabilityReadModel(SmartScheduleDbContext smartScheduleDbContext)
+    {
+        return new ResourceAvailabilityReadModel(smartScheduleDbContext.Database.GetDbConnection());
     }
 
     public AllocationFacade CreateAllocationFacade(
@@ -70,10 +116,11 @@ public class Root
     {
         return new AllocationFacade(
             projectAllocationsRepository,
-            CreateAvailabilityFacade(
+            _appLogicRoot.CreateAvailabilityFacade(
                 resourceAvailabilityRepository,
-                smartScheduleDbContext,
-                eventsPublisher),
+                eventsPublisher,
+                CreateResourceAvailabilityReadModel(smartScheduleDbContext),
+                CreateUnitOfWork(smartScheduleDbContext)),
             CreateCapabilityFinder(resourceAvailabilityRepository, 
                 smartScheduleDbContext, 
                 eventsPublisher, 
@@ -174,14 +221,14 @@ public class Root
         IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher getRequiredService,
-        AllocatableCapabilityRepository allocatableCapabilityRepository)
+        IAllocatableCapabilityRepository allocatableCapabilityRepository)
     {
-        return new CapabilityFinder(
-            CreateAvailabilityFacade(
-                resourceAvailabilityRepository, 
-                smartScheduleDbContext,
-                getRequiredService),
-            allocatableCapabilityRepository);
+        return _appLogicRoot.CreateCapabilityFinder(
+            resourceAvailabilityRepository,
+            getRequiredService,
+            allocatableCapabilityRepository,
+            CreateResourceAvailabilityReadModel(smartScheduleDbContext),
+            CreateUnitOfWork(smartScheduleDbContext));
     }
 
     public OptimizationFacade CreateOptimizationFacade()

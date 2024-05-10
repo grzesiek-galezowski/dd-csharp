@@ -62,7 +62,6 @@ public class Program
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>()));
 
-
         // availability
         builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>(x =>
             x.GetRequiredService<Root>().CreateAvailabilityFacade(
