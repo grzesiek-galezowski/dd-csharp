@@ -23,7 +23,7 @@ public interface IAvailabilityFacade
 }
 
 public class AvailabilityFacade(
-    ResourceAvailabilityRepository availabilityRepository,
+    IResourceAvailabilityRepository availabilityRepository,
     ResourceAvailabilityReadModel availabilityReadModel,
     IEventsPublisher eventsPublisher,
     TimeProvider timeProvider,

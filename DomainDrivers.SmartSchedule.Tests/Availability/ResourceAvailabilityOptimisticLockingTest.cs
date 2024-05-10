@@ -7,11 +7,11 @@ public class ResourceAvailabilityOptimisticLockingTest : IntegrationTestWithShar
 {
     private static readonly TimeSlot OneMonth = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
     
-    private readonly ResourceAvailabilityRepository _resourceAvailabilityRepository;
+    private readonly IResourceAvailabilityRepository _resourceAvailabilityRepository;
 
     public ResourceAvailabilityOptimisticLockingTest(IntegrationTestApp testApp) : base(testApp)
     {
-        _resourceAvailabilityRepository = Scope.ServiceProvider.GetRequiredService<ResourceAvailabilityRepository>();
+        _resourceAvailabilityRepository = Scope.ServiceProvider.GetRequiredService<IResourceAvailabilityRepository>();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class ResourceAvailabilityOptimisticLockingTest : IntegrationTestWithShar
                 //need to spawn new scope(new connection) in order to avoid conflicts which will result in exceptions
                 //https://github.com/npgsql/npgsql/issues/3514#issuecomment-756787766
                 using var scope = Scope.ServiceProvider.CreateScope();
-                var repo = scope.ServiceProvider.GetRequiredService<ResourceAvailabilityRepository>();
+                var repo = scope.ServiceProvider.GetRequiredService<IResourceAvailabilityRepository>();
                 try
                 {
                     var loaded = await repo.LoadById(resourceAvailabilityId);

@@ -49,7 +49,7 @@ public class Root
     }
 
     public AvailabilityFacade CreateAvailabilityFacade(
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher)
     {
@@ -64,7 +64,7 @@ public class Root
     public AllocationFacade CreateAllocationFacade(
         IEventsPublisher eventsPublisher,
         IProjectAllocationsRepository projectAllocationsRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext, 
         AllocatableCapabilityRepository allocatableCapabilityRepository)
     {
@@ -96,7 +96,7 @@ public class Root
     }
 
     public EmployeeFacade CreateEmployeeFacade(EmployeeRepository employeeRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
@@ -116,7 +116,7 @@ public class Root
 
     public DeviceFacade CreateDeviceFacade(
         DeviceRepository deviceRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
@@ -136,7 +136,7 @@ public class Root
 
     public ResourceFacade CreateResourceFacade(EmployeeRepository employeeRepository,
         DeviceRepository deviceRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
@@ -156,7 +156,7 @@ public class Root
     }
 
     public CapabilityScheduler CreateCapabilityScheduler(
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher getRequiredService,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
@@ -171,7 +171,7 @@ public class Root
     }
 
     public CapabilityFinder CreateCapabilityFinder(
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher getRequiredService,
         AllocatableCapabilityRepository allocatableCapabilityRepository)
@@ -198,7 +198,7 @@ public class Root
         RiskPeriodicCheckSagaRepository riskPeriodicCheckSagaRepository,
         ICashflowRepository cashflowRepository,
         IEventsPublisher eventsPublisher,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         AllocatableCapabilityRepository allocatableCapabilityRepository,
         IRiskPushNotification riskPushNotification)
@@ -234,7 +234,7 @@ public class Root
     }
 
     public VerifyNeededResourcesAvailableInTimeSlot CreateVerifyNeededResourcesAvailableInTimeSlot(
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         IRiskPushNotification riskPushNotification)
@@ -250,7 +250,7 @@ public class Root
 
     public VerifyEnoughDemandsDuringPlanning CreateVerifyEnoughDemandsDuringPlanning(
         IProjectRepository projectRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         EmployeeRepository employeeRepository,
@@ -276,7 +276,7 @@ public class Root
 
     public PlanningFacade CreatePlanningFacade(
         IProjectRepository projectRepository,
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher)
     {
@@ -296,7 +296,7 @@ public class Root
     }
 
     public VerifyCriticalResourceAvailableDuringPlanning CreateVerifyCriticalResourceAvailableDuringPlanning(
-        ResourceAvailabilityRepository resourceAvailabilityRepository,
+        IResourceAvailabilityRepository resourceAvailabilityRepository,
         SmartScheduleDbContext smartScheduleDbContext,
         IEventsPublisher eventsPublisher,
         IRiskPushNotification riskPushNotification)

@@ -58,7 +58,7 @@ public class Program
             x.GetRequiredService<Root>()
                 .CreatePlanningFacade(
                     x.GetRequiredService<IProjectRepository>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>()));
 
@@ -66,10 +66,10 @@ public class Program
         // availability
         builder.Services.AddTransient<IAvailabilityFacade, AvailabilityFacade>(x =>
             x.GetRequiredService<Root>().CreateAvailabilityFacade(
-                x.GetRequiredService<ResourceAvailabilityRepository>(),
+                x.GetRequiredService<IResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
                 x.GetRequiredService<IEventsPublisher>()));
-        builder.Services.AddTransient<ResourceAvailabilityRepository>(x =>
+        builder.Services.AddTransient<IResourceAvailabilityRepository>(x =>
             new ResourceAvailabilityRepository(
                 x.GetRequiredService<SmartScheduleDbContext>().Database.GetDbConnection()));
 
@@ -80,7 +80,7 @@ public class Program
             x => x.GetRequiredService<Root>().CreateAllocationFacade(
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<IProjectAllocationsRepository>(),
-                x.GetRequiredService<ResourceAvailabilityRepository>(),
+                x.GetRequiredService<IResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
                 x.GetRequiredService<AllocatableCapabilityRepository>()));
 
@@ -113,7 +113,7 @@ public class Program
             x => x.GetRequiredService<Root>()
                 .CreateEmployeeFacade(
                     x.GetRequiredService<EmployeeRepository>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>()));
@@ -124,7 +124,7 @@ public class Program
             x.GetRequiredService<Root>()
                 .CreateDeviceFacade(
                     x.GetRequiredService<DeviceRepository>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>()));
@@ -133,13 +133,13 @@ public class Program
         builder.Services.AddTransient<AllocatableCapabilityRepository>(x => new AllocatableCapabilityRepository(x.GetRequiredService<SmartScheduleDbContext>()));
         builder.Services.AddTransient<ICapabilityFinder, CapabilityFinder>(
             x => x.GetRequiredService<Root>()
-                .CreateCapabilityFinder(x.GetRequiredService<ResourceAvailabilityRepository>(),
+                .CreateCapabilityFinder(x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>()));
         builder.Services.AddTransient<CapabilityScheduler>(x =>
             x.GetRequiredService<Root>().CreateCapabilityScheduler(
-                x.GetRequiredService<ResourceAvailabilityRepository>(),
+                x.GetRequiredService<IResourceAvailabilityRepository>(),
                 x.GetRequiredService<SmartScheduleDbContext>(),
                 x.GetRequiredService<IEventsPublisher>(),
                 x.GetRequiredService<AllocatableCapabilityRepository>()));
@@ -152,7 +152,7 @@ public class Program
                     x.GetRequiredService<RiskPeriodicCheckSagaRepository>(),
                     x.GetRequiredService<ICashflowRepository>(),
                     x.GetRequiredService<IEventsPublisher>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<AllocatableCapabilityRepository>(),
                     x.GetRequiredService<IRiskPushNotification>()));
@@ -165,7 +165,7 @@ public class Program
         builder.Services.AddTransient<VerifyCriticalResourceAvailableDuringPlanning>(x =>
             x.GetRequiredService<Root>()
                 .CreateVerifyCriticalResourceAvailableDuringPlanning(
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<IRiskPushNotification>()));
@@ -173,7 +173,7 @@ public class Program
             x.GetRequiredService<Root>()
                 .CreateVerifyEnoughDemandsDuringPlanning(
                     x.GetRequiredService<IProjectRepository>(),
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<EmployeeRepository>(),
@@ -183,7 +183,7 @@ public class Program
         builder.Services.AddTransient<VerifyNeededResourcesAvailableInTimeSlot>(x =>
             x.GetRequiredService<Root>()
                 .CreateVerifyNeededResourcesAvailableInTimeSlot(
-                    x.GetRequiredService<ResourceAvailabilityRepository>(),
+                    x.GetRequiredService<IResourceAvailabilityRepository>(),
                     x.GetRequiredService<SmartScheduleDbContext>(),
                     x.GetRequiredService<IEventsPublisher>(),
                     x.GetRequiredService<IRiskPushNotification>()));

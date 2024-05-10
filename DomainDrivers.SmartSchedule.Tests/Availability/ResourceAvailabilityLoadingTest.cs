@@ -6,11 +6,11 @@ namespace DomainDrivers.SmartSchedule.Tests.Availability;
 public class ResourceAvailabilityLoadingTest : IntegrationTestWithSharedApp
 {
     private static readonly TimeSlot OneMonth = TimeSlot.CreateDailyTimeSlotAtUtc(2021, 1, 1);
-    private readonly ResourceAvailabilityRepository _resourceAvailabilityRepository;
+    private readonly IResourceAvailabilityRepository _resourceAvailabilityRepository;
 
     public ResourceAvailabilityLoadingTest(IntegrationTestApp testApp) : base(testApp)
     {
-        _resourceAvailabilityRepository = Scope.ServiceProvider.GetRequiredService<ResourceAvailabilityRepository>();
+        _resourceAvailabilityRepository = Scope.ServiceProvider.GetRequiredService<IResourceAvailabilityRepository>();
     }
 
     [Fact]

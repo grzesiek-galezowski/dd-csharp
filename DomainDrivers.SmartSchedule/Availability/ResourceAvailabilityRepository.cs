@@ -4,7 +4,27 @@ using DomainDrivers.SmartSchedule.Shared;
 
 namespace DomainDrivers.SmartSchedule.Availability;
 
-public class ResourceAvailabilityRepository(IDbConnection dbConnection)
+public interface IResourceAvailabilityRepository
+{
+    Task SaveNew(ResourceAvailability resourceAvailability);
+    Task SaveNew(ResourceGroupedAvailability groupedAvailability);
+
+    Task<IList<ResourceAvailability>> LoadAllWithinSlot(ResourceId resourceId,
+        TimeSlot segment);
+
+    Task<IList<ResourceAvailability>> LoadAllByParentIdWithinSlot(ResourceId parentId,
+        TimeSlot segment);
+
+    Task<bool> SaveCheckingVersion(ResourceAvailability resourceAvailability);
+    Task<bool> SaveCheckingVersion(ResourceGroupedAvailability groupedAvailability);
+    Task<bool> SaveCheckingVersion(IList<ResourceAvailability> resourceAvailabilities);
+    Task<ResourceAvailability> LoadById(ResourceAvailabilityId availabilityId);
+
+    Task<ResourceGroupedAvailability> LoadAvailabilitiesOfRandomResourceWithin(
+        ISet<ResourceId> resourceIds, TimeSlot normalized);
+}
+
+public class ResourceAvailabilityRepository(IDbConnection dbConnection) : IResourceAvailabilityRepository
 {
     public async Task SaveNew(ResourceAvailability resourceAvailability)
     {
